@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 
 """
-This is an extension to the argparse ecosystem.
+The classes in this module extend the argparse ecosystem.
 
 Purpose is to enable the creation of CLI options that would behave a bit like
 ``action=append``, but with a check on choices, that is to say:
 
-* accumulative : *dest* holds a list of strings - it's possible to use the type system as well
-* restrictive : all elements in the list must be in *choices*
-* optionnally reset-able : it should be possible for add_argument to specify a non-void default
+* **accumulative** : *dest* holds a list of strings - it's possible to use the type system as well
+* **restrictive** : all elements in the list must be in *choices*
+* optionnally **reset-able** : it should be possible for add_argument to specify a non-void default
     and in this case we need a means for the CLI to explicitly void the value
 
 In practical terms, we want to specify one or several values for a parameter

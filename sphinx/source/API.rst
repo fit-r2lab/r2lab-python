@@ -8,7 +8,7 @@ General utilities
 .. automodule:: r2lab.utils
                 :members:
 
-``argparse`` additions
+Classes for ``argparse``
 ----------------------
 
 .. automodule:: r2lab.argparse_additions
