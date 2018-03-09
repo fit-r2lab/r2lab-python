@@ -1,9 +1,16 @@
 The r2lab API
 ========================================
 
-The ListOfChoices class
-------------------------------
 
-.. automodule:: r2lab.listofchoices
+General utilities
+-----------------
+
+.. automodule:: r2lab.utils
+                :members:
+
+``argparse`` additions
+----------------------
+
+.. automodule:: r2lab.argparse_additions
 		:members:
 

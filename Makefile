@@ -34,16 +34,20 @@ tags:
 
 .PHONY: tags
 
+##############################
+tests test:
+	python3 -m unittest
+
+.PHONY: tests test
+
 ########## sphinx
-sphinx:
+sphinx doc:
 	$(MAKE) -C sphinx html
 
-sphinx-clean:
+sphinx-clean doc-clean:
 	$(MAKE) -C sphinx clean
 
-all-sphinx: readme-clean readme sphinx
-
-.PHONY: sphinx sphinx-clean all-sphinx
+.PHONY: sphinx doc sphinx-clean doc-clean
 
 ##########
 pep8:
