@@ -65,11 +65,11 @@ class R2labSidecar(SocketIO):
     def channel_data(self, category):
         # The name of the socketio channel used to broadcast data on
         # a given category, which typically is ``nodes`` or ``phones``
-        return f"info:{category}"
+        return "info:{}".format(category)
 
     def channel_request(self, category):
         # ditto for requesting a broadcast about that category
-        return f"request:{category}"
+        return "request:{}".format(category)
 
     
     # so that self.wait() returns when we want it to..
@@ -91,7 +91,7 @@ class R2labSidecar(SocketIO):
                 result = hash
                 self._local_stop_waiting = True
             except Exception as e:
-                print(f"OOPS {type(e)}")
+                print("OOPS {}".format(type(e)))
                 
         self.once(self.channel_data(category), callback)
         # contents does not matter here

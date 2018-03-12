@@ -27,5 +27,5 @@ class Tests(TestCase):
         with R2labSidecar("http://localhost:10000/") as sidecar:
             nodes = sidecar.nodes_status()
         for id, node in nodes.items():
-            print(f"local server: nodes[{id}] = {node}")
+            print("local server: nodes[{}] = {}".format(id, node))
         
