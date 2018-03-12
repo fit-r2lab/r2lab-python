@@ -68,8 +68,7 @@ def find_local_embedded_script(script, extra_paths=None):
 
 
     Example:
-
-        Search for ``oai-enb.sh`` so as to run it remotely:
+        Search for ``oai-enb.sh`` so as to run it remotely::
 
             local_script = find_local_embedded_script("oai-enb.sh")
             RunScript(localscript, ...)

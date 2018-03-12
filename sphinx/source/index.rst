@@ -11,8 +11,8 @@ Contents:
 .. toctree::
    :maxdepth: 3
 
-   API
    README 
+   API 
 
 History:
 

@@ -9,7 +9,9 @@ from r2lab.version import version as __version__
 
 long_description = "See README at https://github.com/fit-r2lab/r2lab-python/blob/master/README.md"
 
-required_modules = []
+required_modules = [
+    'socketIO-client',
+]
 
 setuptools.setup(
     name             = "r2lab",
