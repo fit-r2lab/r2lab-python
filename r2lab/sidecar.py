@@ -117,3 +117,8 @@ class R2labSidecar(SocketIO):
 
         """
         return self._request_category('nodes')
+
+    def set_node(self, id, attribute, value):
+        # xxx
+        pass
+
