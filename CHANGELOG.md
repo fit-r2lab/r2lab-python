@@ -1,8 +1,16 @@
 # ChangeLog
 
+## 0.0.4 - 2018 Mar 13
+
+* hopefully `pip3 install r2lab` will now properly install
+  the socketIO_client dependency
+* adopting for sphinx same layout as asynciojobs/apssh
+  with no source/ subdir
+
 ## 0.0.3 - 2018 Mar 12
 
-* let's avoid f-strings for now, if only for `readthedocs`, plus not everyone can be assumed to have 3.6 yet
+* let's avoid f-strings for now, if only for `readthedocs`,
+  plus not everyone can be assumed to have 3.6 yet
 
 ## 0.0.2 - 2018 Mar 12
 
