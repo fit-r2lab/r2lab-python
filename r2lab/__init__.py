@@ -1,3 +1,5 @@
+from .version import version as __version__
+
 from .argparse_additions import (
     ListOfChoices,
     ListOfChoicesNullReset,
@@ -9,6 +11,12 @@ from .utils import (
     find_local_embedded_script,
 )
 
-from .sidecar import (
-    R2labSidecar,
-)
+# protect for install-time when dependencies are not yet installed
+try:
+    import socketIO_client
+    from .sidecar import (
+        R2labSidecar,
+    )
+except:
+    print("Warning: could not import module socketIO_client")
+
