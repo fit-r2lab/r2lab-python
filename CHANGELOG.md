@@ -1,5 +1,9 @@
 # ChangeLog
 
+## 0.0.5 - 2018 Mar 13
+
+* sidecar knows how to write stuff about nodes and phones too
+
 ## 0.0.4 - 2018 Mar 13
 
 * hopefully `pip3 install r2lab` will now properly install
