@@ -44,8 +44,9 @@ class R2labSidecar(SocketIO):
     statement.
 
     """
-    def __init__(self, url=default_sidecar_url):
+    def __init__(self, url=default_sidecar_url, *, verbose=False):
         self.url = url
+        self.verbose = verbose
         parsed = urlparse(self.url)
         scheme, hostname, port \
             = parsed.scheme, parsed.hostname, parsed.port or 80
@@ -76,30 +77,51 @@ class R2labSidecar(SocketIO):
     def _should_stop_waiting(self, *kw):
         return self._local_stop_waiting or SocketIO._should_stop_waiting(self, *kw)
 
-    def _request_category(self, category):
+    def _probe_category(self, category):
         # what's returned when s/t goes wrong
         # xxx should it raise an exception instead ?
-        result = {}
+        infos = None
         # reset our own short-circuit flag
         self._local_stop_waiting = False
         def callback(*args):
-            nonlocal result
+            nonlocal infos
             try:
                 string, = args
-                parsed = json.loads(string)
-                hash = {d['id']: d for d in parsed}
-                result = hash
+                infos = json.loads(string)
                 self._local_stop_waiting = True
             except Exception as e:
-                print("OOPS {}".format(type(e)))
+                print("R2labSidecar._probe_category - OOPS {} - {}".format(type(e), e))
+                
                 
         self.once(self.channel_data(category), callback)
-        # contents does not matter here
+        # actual contents sent does not matter here
         self.emit(self.channel_request(category), 'PLEASE')
         self.wait(seconds=1)
-        return result
+        info_by_id = {info['id'] : info for info in infos}
+        return info_by_id
 
 
+    def _set_triples(self, category, triples):
+        # build the corresponding infos - a list of the form
+        # [ { 'id' : id, 'attibute' : value, ..}, ...]
+        # and emit that on the proper channel
+        # for that we start with a hash id -> info
+        info_by_id = {}
+        for id, attribute, value in triples:
+            # accept strings 
+            id = int(id)
+            if id not in info_by_id:
+                info_by_id[id] = {'id' : id}
+            info_by_id[id][attribute] = value
+        infos = list(info_by_id.values())
+        # send infos on proper channel and json-encoded
+        return self.emit(self.channel_data(category),
+                         json.dumps(infos),
+                         None)
+
+
+    #################### nodes
+    
     def nodes_status(self):
         """
         A blocking function call that returns the JSON nodes status for the complete testbed.
@@ -115,10 +137,68 @@ class R2labSidecar(SocketIO):
                     nodes_status = sidecar.nodes_status()
                 print(nodes_status[1]['usrp_type'])
 
+        .. warning::
+          As of this rough implementation, it is recommended to use this method 
+          on a freshly opened object. When used on an older object, you may, and probably
+          will, receive a result that is older than the time where you posted a request.
+
         """
-        return self._request_category('nodes')
+        return self._probe_category('nodes')
 
-    def set_node(self, id, attribute, value):
-        # xxx
-        pass
 
+    def set_nodes_triples(self, *triples):
+        """
+        Args:
+            each argument is expected to be a tuple or list
+                of the form `id, attribute, value`. The same node 
+                id can be used in several triples.
+
+        Example:
+            to mark node 1 as unavailable and node 2 as turned off::
+
+                sidecar.set_nodes_triples(
+                    (1, 'available', 'ok'),
+                    (2, 'cmc_on_off', 'off'),
+                   )
+
+
+        """
+        return self._set_triples('nodes', triples)
+
+    def set_node_attribute(self, id, attribute, value):
+        """
+        Args:
+            id: a node_id as an int or str 
+            attribute(str): the name of the attribute to be written
+            value(str): the new value
+
+        Example:
+            to mark node 1 as unavailable::
+
+                sidecar.set_node_attribute(1, 'available', 'ko')
+        """
+        return self.set_nodes_triples((id, attribute, value))
+
+
+    #################### phones
+    
+
+    def phones_status(self):
+        "Just like ``nodes_status`` but on phones"
+        return self._probe_category('phones')
+
+    def set_phones_triples(self, *triples):
+        "Identical to ``set_nodes_triples`` but on phones"
+        return self._set_triples('phones', triples)
+
+    def set_phone_attribute(self, id, attribute, value):
+        """
+        Similar to ``set_node_attribute`` on a phone
+
+        Example:
+            To mark phone 2 as being turned off (although this is constantly 
+            recomputed by the phones monitor)::
+
+                sidecar.set_phone_attribute(2, 'airplane_mode', 'on')
+        """
+        return self.set_phones_triples((id, attribute, value))
