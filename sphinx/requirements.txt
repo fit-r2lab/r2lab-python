@@ -1,3 +1,4 @@
 sphinxcontrib-asyncio
-asynciojobs
+sphinxcontrib-napoleon
 socketIO-client
+asynciojobs
