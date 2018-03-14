@@ -4,6 +4,7 @@ import argparse
 
 from r2lab import ListOfChoices, ListOfChoicesNullReset
 
+
 class Tests(unittest.TestCase):
 
     def test1(self):
@@ -11,7 +12,7 @@ class Tests(unittest.TestCase):
         ListOfChoices micro-test for antennas-like
         """
         def p():
-            parser=argparse.ArgumentParser(
+            parser = argparse.ArgumentParser(
                 formatter_class=argparse.ArgumentDefaultsHelpFormatter)
             parser.add_argument("-a", "--antenna-mask", default=['1', '1'],
                                 choices=['1', '3', '7', '11'],
@@ -23,7 +24,8 @@ class Tests(unittest.TestCase):
         self.assertEqual(p().parse_args().antennas, ['1', '1'])
         self.assertEqual(p().parse_args([]).antennas, ['1', '1'])
         self.assertEqual(p().parse_args(['-a', '1']).antennas, ['1'])
-        self.assertEqual(p().parse_args(['-a', '1', '-a', '3']).antennas, ['1', '3'])
+        self.assertEqual(p().parse_args(
+            ['-a', '1', '-a', '3']).antennas, ['1', '3'])
         self.assertEqual(p().parse_args(
             ['-a', '1', '-a', '3', '-a', '11']).antennas, ['1', '3', '11'])
 
@@ -32,7 +34,7 @@ class Tests(unittest.TestCase):
         ListOfChoices micro-test for phones-like
         """
         def p():
-            parser=argparse.ArgumentParser(
+            parser = argparse.ArgumentParser(
                 formatter_class=argparse.ArgumentDefaultsHelpFormatter)
             parser.add_argument("-p", "--phones", default=[1],
                                 choices=(1, 2, 3, 0),
@@ -45,8 +47,10 @@ class Tests(unittest.TestCase):
         self.assertEqual(p().parse_args([]).phones, [1])
         self.assertEqual(p().parse_args(['-p', '1']).phones, [1])
         self.assertEqual(p().parse_args(['-p', '1', '-p', '2']).phones, [1, 2])
-        self.assertEqual(p().parse_args(['-p', '1', '-p', '3', '-p', '2']).phones, [1, 3, 2])
+        self.assertEqual(p().parse_args(
+            ['-p', '1', '-p', '3', '-p', '2']).phones, [1, 3, 2])
         self.assertEqual(p().parse_args(['-p', '0']).phones, [])
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -1,5 +1,6 @@
 from pathlib import Path
 
+
 def r2lab_hostname(x, prefix='fit', incoming='fit'):
     """
     Return a valid hostname like ``fit01`` from an input that can be
@@ -19,7 +20,7 @@ def r2lab_hostname(x, prefix='fit', incoming='fit'):
 
            rl2ab_hostname('reboot1', incoming='reboot') == 'fit01'
     """
-    return "{}{:02d}".format(prefix, int(str(x).replace(incoming,'')))
+    return "{}{:02d}".format(prefix, int(str(x).replace(incoming, '')))
 
 
 def r2lab_parse_slice(slice):
@@ -40,7 +41,7 @@ def r2lab_parse_slice(slice):
             slice, hostname = r2lab_parse_slice("inria_r2lab.tutorial")
 
             slice, hostname = r2lab_parse_slice("inria_r2lab.tutorial@faraday.inria.fr")
-    
+
     """
     if slice.find('@') > 0:
         user, host = slice.split('@')
@@ -74,7 +75,7 @@ def find_local_embedded_script(script, extra_paths=None):
             RunScript(localscript, ...)
 
     Note:
-    
+
         Should this also look for some env. variable ?
 
     """
@@ -92,10 +93,10 @@ def find_local_embedded_script(script, extra_paths=None):
     # convert extra paths into Paths
     if extra_paths is not None:
         heuritics += [Path(path) for path in extra_paths]
-        
+
     # several chances each time
-    relatives = [ 'r2lab-embedded/shell', 'shell', '.' ]
-        
+    relatives = ['r2lab-embedded/shell', 'shell', '.']
+
     for path in heuritics:
         for relative in relatives:
             candidate = path / relative / script
@@ -105,4 +106,3 @@ def find_local_embedded_script(script, extra_paths=None):
     for path in heuritics:
         for relative in relatives:
             print("W: searched in {}".format(path / relative))
-

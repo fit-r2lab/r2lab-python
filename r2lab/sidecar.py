@@ -17,29 +17,31 @@ default_sidecar_url = 'https://r2lab.inria.fr:999/'
 # the attributes of interest, and their possible values
 # this for now is for information only
 supported_attributes = {
-    'node' : {
+    'node': {
         '__range__': range(1, 38),
-        'available' : ("on", "off"),
-        'usrp_type' : ("none", "b210", "n210", "usrp1", "usrp2",
-                       "limesdr", "LEAT LoRa", "e3372"),
+        'available': ("on", "off"),
+        'usrp_type': ("none", "b210", "n210", "usrp1", "usrp2",
+                      "limesdr", "LEAT LoRa", "e3372"),
         # this is meaningful for b210 nodes only
-        'usrp_duplexer' : ("for UE", "for eNB", "none"),
+        'usrp_duplexer': ("for UE", "for eNB", "none"),
     },
-    'phone' : {
-        '__range__' : range(1, 2),
-        'airplane_mode' : ("on", "off"),
+    'phone': {
+        '__range__': range(1, 2),
+        'airplane_mode': ("on", "off"),
     }
 }
 
 # provide a simpler way to turn on debugging
 import logging
 
+
 def socketio_logging_to_stdout(level):
     logger = logging.getLogger('socketIO-client')
     logger.setLevel(level)
     ch = logging.StreamHandler()
     ch.setLevel(level)
-    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    formatter = logging.Formatter(
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s")
     ch.setFormatter(formatter)
     logger.addHandler(ch)
 
@@ -56,6 +58,7 @@ class R2labSidecar(SocketIO):
     statement.
 
     """
+
     def __init__(self, url=default_sidecar_url, *, debug=False):
         self.url = url
         parsed = urlparse(self.url)
@@ -66,7 +69,7 @@ class R2labSidecar(SocketIO):
             extras = {}
         elif scheme == 'https':
             host_part = "https://{}".format(hostname)
-            extras = {'verify' : False}
+            extras = {'verify': False}
         else:
             print("unsupported scheme {}".format(scheme))
         super().__init__(host_part, port, LoggingNamespace, **extras)
@@ -86,7 +89,6 @@ class R2labSidecar(SocketIO):
         # ditto for requesting a broadcast about that category
         return "request:{}".format(category)
 
-    
     # so that self.wait() returns when we want it to..
     def _should_stop_waiting(self, *kw):
         return self._local_stop_waiting or SocketIO._should_stop_waiting(self, *kw)
@@ -97,6 +99,7 @@ class R2labSidecar(SocketIO):
         infos = None
         # reset our own short-circuit flag
         self._local_stop_waiting = False
+
         def callback(*args):
             nonlocal infos
             try:
@@ -105,15 +108,13 @@ class R2labSidecar(SocketIO):
                 self._local_stop_waiting = True
             except Exception as e:
                 print("R2labSidecar._probe_category - OOPS {} - {}".format(type(e), e))
-                
-                
+
         self.once(self.channel_data(category), callback)
         # actual contents sent does not matter here
         self.emit(self.channel_request(category), 'PLEASE')
         self.wait(seconds=1)
-        info_by_id = {info['id'] : info for info in infos}
+        info_by_id = {info['id']: info for info in infos}
         return info_by_id
-
 
     def _set_triples(self, category, triples):
         # build the corresponding infos - a list of the form
@@ -122,10 +123,10 @@ class R2labSidecar(SocketIO):
         # for that we start with a hash id -> info
         info_by_id = {}
         for id, attribute, value in triples:
-            # accept strings 
+            # accept strings
             id = int(id)
             if id not in info_by_id:
-                info_by_id[id] = {'id' : id}
+                info_by_id[id] = {'id': id}
             info_by_id[id][attribute] = value
         infos = list(info_by_id.values())
         # send infos on proper channel and json-encoded
@@ -133,15 +134,14 @@ class R2labSidecar(SocketIO):
                          json.dumps(infos),
                          None)
 
+    # nodes
 
-    #################### nodes
-    
     def nodes_status(self):
         """
         A blocking function call that returns the JSON nodes status for the complete testbed.
 
         Returns:
-            A python dictionary indexed by integers 1 to 37, whose values are 
+            A python dictionary indexed by integers 1 to 37, whose values are
             dictionaries with keys corresponding to each node's attributes at that time.
 
         Example:
@@ -152,19 +152,18 @@ class R2labSidecar(SocketIO):
                 print(nodes_status[1]['usrp_type'])
 
         .. warning::
-          As of this rough implementation, it is recommended to use this method 
+          As of this rough implementation, it is recommended to use this method
           on a freshly opened object. When used on an older object, you may, and probably
           will, receive a result that is older than the time where you posted a request.
 
         """
         return self._probe_category('nodes')
 
-
     def set_nodes_triples(self, *triples):
         """
         Args:
             each argument is expected to be a tuple or list
-                of the form `id, attribute, value`. The same node 
+                of the form `id, attribute, value`. The same node
                 id can be used in several triples.
 
         Example:
@@ -182,7 +181,7 @@ class R2labSidecar(SocketIO):
     def set_node_attribute(self, id, attribute, value):
         """
         Args:
-            id: a node_id as an int or str 
+            id: a node_id as an int or str
             attribute(str): the name of the attribute to be written
             value(str): the new value
 
@@ -193,9 +192,7 @@ class R2labSidecar(SocketIO):
         """
         return self.set_nodes_triples((id, attribute, value))
 
-
-    #################### phones
-    
+    # phones
 
     def phones_status(self):
         "Just like ``nodes_status`` but on phones"
@@ -210,7 +207,7 @@ class R2labSidecar(SocketIO):
         Similar to ``set_node_attribute`` on a phone
 
         Example:
-            To mark phone 2 as being turned off (although this is constantly 
+            To mark phone 2 as being turned off (although this is constantly
             recomputed by the phones monitor)::
 
                 sidecar.set_phone_attribute(2, 'airplane_mode', 'on')

@@ -33,16 +33,18 @@ parser.add_argument("-u", "--sidecar-url", dest="sidecar_url",
                     .format(default_sidecar_url))
 args = parser.parse_args()
 
+
 def check_valid(node):
     return 1 <= node <= 37
 
-invalid_nodes = [ node for node in args.nodes if not check_valid(node) ]
+
+invalid_nodes = [node for node in args.nodes if not check_valid(node)]
 
 if invalid_nodes:
     print("Invalid inputs {} - exiting".format(invalid_nodes))
     exit(1)
 
-triples = [ (node, 'available', available_value) for node in args.nodes ]
+triples = [(node, 'available', available_value) for node in args.nodes]
 
 url = args.sidecar_url
 print("Connecting to sidecar at {}".format(url))

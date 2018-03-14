@@ -15,8 +15,7 @@ class Tests(TestCase):
         with R2labSidecar(debug=True) as sidecar:
             nodes = sidecar.nodes_status()
         self.assertEqual(nodes[1]['available'], 'ok')
-            
-            
+
     # requirements to run this part:
     # a running local sidecar server (sidecar.js -l)
     def local(self):
@@ -45,11 +44,12 @@ class Tests(TestCase):
                 ('2', 'available', 'ko'),
                 ('3', 'cmc_on_off', 'off'),
                 ('2', 'cmc_on_off', 'on'),
-                )
+            )
             nodes = sidecar.nodes_status()
-            print("Third fetch on node 2 (expect available=ko) {}".format(nodes[2]))
+            print(
+                "Third fetch on node 2 (expect available=ko) {}".format(nodes[2]))
             self.assertEqual(nodes[2]['available'], 'ko')
-        
+
     def local_phones(self):
         with R2labSidecar("http://localhost:10000/") as sidecar:
             sidecar.set_phone_attribute(1, 'airplane_mode', 'on')
@@ -64,8 +64,9 @@ class Tests(TestCase):
                 ('2', 'airplane_mode', 'on')
             )
             phones = sidecar.phones_status()
-            print("Second fetch on phone 1 (expect airplane_mode=off) {}".format(phones[1]))
+            print(
+                "Second fetch on phone 1 (expect airplane_mode=off) {}".format(phones[1]))
             self.assertEqual(phones[1]['airplane_mode'], 'off')
-            print("Second fetch on phone 2 (expect airplane_mode=on) {}".format(phones[2]))
+            print(
+                "Second fetch on phone 2 (expect airplane_mode=on) {}".format(phones[2]))
             self.assertEqual(phones[2]['airplane_mode'], 'on')
-        
