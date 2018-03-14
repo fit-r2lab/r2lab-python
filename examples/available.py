@@ -3,7 +3,7 @@
 """
 This script emits messages to the sidecar server on faraday
 to instruct it that some nodes are available or not
-(use available.py or unavailable.py) 
+(use available.py or unavailable.py)
 """
 
 # xxx todo1 - if needed we could add options too to chose between available and unavailable
@@ -31,6 +31,7 @@ parser.add_argument("-u", "--sidecar-url", dest="sidecar_url",
                     default=default_sidecar_url,
                     help="url for thesidecar server (default={})"
                     .format(default_sidecar_url))
+parser.add_argument("-d", "--debug", default=False, action='store_true')
 args = parser.parse_args()
 
 
@@ -48,5 +49,5 @@ triples = [(node, 'available', available_value) for node in args.nodes]
 
 url = args.sidecar_url
 print("Connecting to sidecar at {}".format(url))
-with R2labSidecar(url) as sidecar:
+with R2labSidecar(url, debug=args.debug) as sidecar:
     sidecar.set_nodes_triples(*triples)
