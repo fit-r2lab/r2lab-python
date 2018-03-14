@@ -6,19 +6,13 @@ from r2lab import R2labSidecar
 
 # this is for debug/devel, at the very least
 # it needs the logging config file mentioned here
-def enable_debug():
-    import logging, logging.config
-    logging.config.fileConfig('r2lab/logging-debug.conf')
-    logger = logging.getLogger('socketIO-client')
 
 
 class Tests(TestCase):
 
-    # enable_debug()
-
     def test_prod(self):
 
-        with R2labSidecar() as sidecar:
+        with R2labSidecar(debug=True) as sidecar:
             nodes = sidecar.nodes_status()
         self.assertEqual(nodes[1]['available'], 'ok')
             
