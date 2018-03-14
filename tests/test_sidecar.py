@@ -30,6 +30,7 @@ class Tests(TestCase):
         self.local_phones()
 
     def local_nodes(self):
+        print("Using regular/silent mode")
         with R2labSidecar("http://localhost:10000/") as sidecar:
             sidecar.set_node_attribute(1, 'available', 'ok')
             nodes = sidecar.nodes_status()
@@ -44,7 +45,8 @@ class Tests(TestCase):
             print("Second fetch (expect available=ko) {}".format(nodes[1]))
             self.assertEqual(nodes[1]['available'], 'ko')
         # ditto
-        with R2labSidecar("http://localhost:10000/") as sidecar:
+        print("Using debug mode")
+        with R2labSidecar("http://localhost:10000/", debug=True) as sidecar:
             sidecar.set_nodes_triples(
                 ('2', 'available', 'ko'),
                 ('3', 'cmc_on_off', 'off'),

@@ -31,6 +31,18 @@ supported_attributes = {
     }
 }
 
+# provide a simpler way to turn on debugging
+import logging
+
+def socketio_logging_to_stdout(level):
+    logger = logging.getLogger('socketIO-client')
+    logger.setLevel(level)
+    ch = logging.StreamHandler()
+    ch.setLevel(level)
+    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    ch.setFormatter(formatter)
+    logger.addHandler(ch)
+
 
 class R2labSidecar(SocketIO):
 
@@ -44,9 +56,8 @@ class R2labSidecar(SocketIO):
     statement.
 
     """
-    def __init__(self, url=default_sidecar_url, *, verbose=False):
+    def __init__(self, url=default_sidecar_url, *, debug=False):
         self.url = url
-        self.verbose = verbose
         parsed = urlparse(self.url)
         scheme, hostname, port \
             = parsed.scheme, parsed.hostname, parsed.port or 80
@@ -61,7 +72,10 @@ class R2labSidecar(SocketIO):
         super().__init__(host_part, port, LoggingNamespace, **extras)
         # hack the default logic so that it waits until WE decide
         self._local_stop_waiting = False
-
+        # initialize logger; note that by design of socketIO_client,
+        # all instances share the same logger
+        level = logging.DEBUG if debug else logging.ERROR
+        socketio_logging_to_stdout(level)
 
     def channel_data(self, category):
         # The name of the socketio channel used to broadcast data on
