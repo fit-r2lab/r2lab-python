@@ -1,5 +1,9 @@
 # ChangeLog
 
+## 0.1.0 - 2018 Mar 14
+
+* sidecar has a debug mode
+
 ## 0.0.5 - 2018 Mar 13
 
 * sidecar knows how to write stuff about nodes and phones too
