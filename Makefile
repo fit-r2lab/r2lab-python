@@ -38,7 +38,14 @@ tags:
 tests test:
 	python3 -m unittest
 
-.PHONY: tests test
+test-sidecar:
+	python3 -m unittest tests.test_sidecar
+
+test-sidecar-local:
+	python3 -m unittest tests.test_sidecar.Tests.local_nodes
+
+
+.PHONY: tests test test-sidecar
 
 ########## sphinx
 sphinx doc:
