@@ -7,6 +7,8 @@ from .argparse_additions import (
 
 from .utils import (
     r2lab_hostname,
+    r2lab_reboot,
+    r2lab_data,
     r2lab_parse_slice,
     find_local_embedded_script,
 )
