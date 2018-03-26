@@ -1,5 +1,9 @@
 # ChangeLog
 
+## 0.1.1 - 2018 Mar 26
+
+* r2lab_hostname now comes in 2 new variants r2lab_data and r2lab_reboot
+
 ## 0.1.0 - 2018 Mar 14
 
 * sidecar has a debug mode
