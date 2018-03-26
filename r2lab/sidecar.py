@@ -13,6 +13,11 @@ from socketIO_client import SocketIO, LoggingNamespace
 
 default_sidecar_url = 'https://r2lab.inria.fr:999/'
 
+### see also
+# https://github.com/invisibleroads/socketIO-client/issues/86
+# https://github.com/invisibleroads/socketIO-client/pull/87
+# https://stackoverflow.com/questions/37058119/python-and-socket-io-app-hangs-after-connection/37186664#37186664
+# for a possible fix about SSL connections
 
 # the attributes of interest, and their possible values
 # this for now is for information only

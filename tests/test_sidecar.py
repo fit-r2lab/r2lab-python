@@ -16,6 +16,12 @@ class Tests(TestCase):
             nodes = sidecar.nodes_status()
         self.assertEqual(nodes[1]['available'], 'ok')
 
+    def local_simplest(self):
+
+        with R2labSidecar("http://localhost:10000/", debug=True) as sidecar:
+            nodes = sidecar.nodes_status()
+        self.assertEqual(nodes[1]['available'], 'ok')
+
     # requirements to run this part:
     # a running local sidecar server (sidecar.js -l)
     def local(self):
