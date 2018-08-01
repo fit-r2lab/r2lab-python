@@ -2,6 +2,9 @@ import re
 
 from pathlib import Path
 
+from asynciojobs import Scheduler
+from apssh import SshNode, SshJob, Run, TimeColonFormatter
+
 def _r2lab_name(x, prefix='fit'):
     if isinstance(x, bytes):
         x = x.decode(encoding='utf-8')
@@ -127,3 +130,156 @@ def find_local_embedded_script(script, extra_paths=None):
     for path in heuritics:
         for relative in relatives:
             print("W: searched in {}".format(path / relative))
+
+class r2labFalseStartError(Exception):
+    """Personal exception that is raise if there is a problem when using
+        "generate_experiment_header"
+    """
+    pass
+
+def load_option(image="_default", timeout=300, bandwidth=500, curses=False,
+                no_reset=True):
+    """
+    Wrapper to generate correct tupple use in the generate_experiment_header
+    """
+    image_load = ""
+    if image != "_default":
+        image_load = "-i "+image
+    return image_load
+
+def generate_experiment_header(slicename=None,
+                               dic_node_image=None, list_sdr_on=None,
+                               verbose_jobs=False, verbose_ssh=False,
+                               formatter=TimeColonFormatter()):
+    """ This helper is designed to populate a scheduler with element usefull
+    at the start of an experiment. It allows the user to avoid the complicated
+    synthax problem with rhubarbe on faraday.
+
+
+    Argument :
+    -slicename : Name of your slice on faraday (it is mandatory),
+    -dic_node_image : A dictionary used to precise which node you want to turn
+                      on.
+                      It should be formated : {node_identifier : image_name}
+                      -node_identifier is anything that cas identify a node,
+                       like ''1''(int), ''1''(string), '01', 'fit1', etc...
+                      -image_name is the name of the image you want to load
+                       on this node. None and "" are the default image
+    -list_sdr_on : List node_identifier attached to an sdr you want to turn
+                    on
+    -verbose_jobs : Enable/disable verbose mode on jobs.
+    -verbose_ssh : Enable/disable verbose mode on ssh.
+    -formatter : The colon formater you want to use on your node.
+
+    Return :
+     The scheduler containing the generated experiment header
+     (checklease, on nodes, load images, sdr on)
+    """
+    scheduler = Scheduler(label="Experiment Header")
+    if not slicename:
+        raise r2labFalseStartError("No slice name given to check if you have"
+                                     " a valid lease.")
+
+    # Declaring nodes
+    faraday = SshNode(hostname="faraday.inria.fr", username=slicename,
+                      formatter=formatter, verbose=verbose_ssh)
+
+    #Job to check lease
+    check_lease = SshJob(
+        scheduler=scheduler,
+        node=faraday,
+        verbose=verbose_jobs,
+        label="Check lease {}".format(slicename),
+        command=Run("rhubarbe leases --check", label="rlease"),
+    )
+
+    if dic_node_image:
+        load_sched = Scheduler(required=check_lease,
+                               scheduler=scheduler,
+                               label="Load Scheduler")
+        dic_load = {}
+        negated_node_ids = []
+        node_ids = []
+        for id, image in dic_node_image.items():
+            negated_node_ids.append("~{}".format(r2lab_hostname(id)))
+            node_ids.append("{}".format(r2lab_hostname(id)))
+            if image is None or image == "":
+                image = "_default"
+
+            try:
+                dic_load[image].append(r2lab_hostname(id))
+            except KeyError:
+                dic_load[image] = [r2lab_hostname(id)]
+        off_job = SshJob(
+                         node=faraday,
+                         scheduler=load_sched,
+                         verbose=verbose_jobs,
+                         label="rhubarbe off {}"
+                         .format(negated_node_ids),
+                         command=Run("rhubarbe-off -a ", *negated_node_ids,
+                                     label="turn off every nodes except {}"
+                                     .format(" ".join(node_ids))
+                                     )
+                        )
+        load_jobs = [SshJob(
+                            node=faraday,
+                            verbose=verbose_jobs,
+                            label="rhubarbe load {} image to {}"
+                            .format(image, " ".join(ids)),
+                            command=Run("rhubarbe-load {} {}"
+                                        .format(load_option(image),
+                                                " ".join(ids)),
+                                        label="load {} on {}"
+                                        .format(image, ", ".join(ids))
+                                        )
+                            )
+                     for image, ids in dic_load.items()]
+        load_job = Scheduler(
+                                *load_jobs,
+                                required=off_job,
+                                scheduler=load_sched,
+                                label="image loading"
+                                )
+        wait_job = SshJob(
+                          node=faraday,
+                          scheduler=load_sched,
+                          required=load_job,
+                          verbose=verbose_jobs,
+                          label="rhubarbe wait {}".format(" ".join(node_ids)),
+                          command=Run("rhubarbe-wait ", *node_ids,
+                                      label="rwait")
+                          )
+    if list_sdr_on:
+
+        sdr_sched = Scheduler(required=check_lease,
+                               scheduler=scheduler,
+                               label="Turn on sdr")
+        negated_sdr = []
+        sdrs = []
+        for sdr in list_sdr_on:
+            negated_sdr.append("~{}".format(r2lab_hostname(sdr)))
+            sdrs.append("{}".format(r2lab_hostname(sdr)))
+        sdroff_job = SshJob(
+                             node=faraday,
+                             scheduler=sdr_sched,
+                             verbose=verbose_jobs,
+                             label="rhubarbe-sdroff {}"
+                             .format(negated_sdr),
+                             command=Run("rhubarbe-usrpoff -a ", *negated_sdr,
+                                         label="turn off every sdr except {}"
+                                         .format(" ".join(sdrs))
+                                         )
+                             )
+        sdron_job = SshJob(
+                             node=faraday,
+                             scheduler=sdr_sched,
+                             required=sdroff_job,
+                             verbose=verbose_jobs,
+                             label="rhubarbe-sdron {}"
+                             .format(sdrs),
+                             command=Run("rhubarbe-usrpon", *sdrs,
+                                         label="turn on sdr {}"
+                                         .format(" ".join(sdrs))
+                                         )
+                             )
+    return scheduler

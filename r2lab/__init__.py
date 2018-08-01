@@ -11,6 +11,7 @@ from .utils import (
     r2lab_data,
     r2lab_parse_slice,
     find_local_embedded_script,
+    generate_experiment_header
 )
 
 # protect for install-time when dependencies are not yet installed
