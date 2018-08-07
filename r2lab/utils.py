@@ -192,11 +192,47 @@ def generate_experiment_header(slicename=None,
         label="Check lease {}".format(slicename),
         command=Run("rhubarbe leases --check", label="rlease"),
     )
+    green_light = check_lease
 
-    if dic_node_image:
-        load_sched = Scheduler(required=check_lease,
+    if list_sdr_on:
+
+        sdr_sched = Scheduler(required=green_light,
                                scheduler=scheduler,
-                               label="Load Scheduler")
+                               label="Turn on sdr")
+        green_light = sdr_sched
+        negated_sdr = []
+        sdrs = []
+        for sdr in list_sdr_on:
+            negated_sdr.append("~{}".format(r2lab_hostname(sdr)))
+            sdrs.append("{}".format(r2lab_hostname(sdr)))
+        sdroff_job = SshJob(
+                             node=faraday,
+                             scheduler=sdr_sched,
+                             verbose=verbose_jobs,
+                             label="rhubarbe-sdroff {}"
+                             .format(negated_sdr),
+                             command=Run("rhubarbe-usrpoff -a ", *negated_sdr,
+                                         label="turn off every sdr except {}"
+                                         .format(" ".join(sdrs))
+                                         )
+                             )
+        sdron_job = SshJob(
+                             node=faraday,
+                             scheduler=sdr_sched,
+                             required=sdroff_job,
+                             verbose=verbose_jobs,
+                             label="rhubarbe-sdron {}"
+                             .format(sdrs),
+                             command=Run("rhubarbe-usrpon", *sdrs,
+                                         label="turn on sdr {}"
+                                         .format(" ".join(sdrs))
+                                         )
+                             )
+    if dic_node_image:
+        load_sched = Scheduler(required=green_light,
+                               scheduler=scheduler,
+                               label="Load Images")
+
         dic_load = {}
         negated_node_ids = []
         node_ids = []
@@ -235,11 +271,11 @@ def generate_experiment_header(slicename=None,
                             )
                      for image, ids in dic_load.items()]
         load_job = Scheduler(
-                                *load_jobs,
-                                required=off_job,
-                                scheduler=load_sched,
-                                label="image loading"
-                                )
+                            *load_jobs,
+                            required=off_job,
+                            scheduler=load_sched,
+                            label="image loading"
+                            )
         wait_job = SshJob(
                           node=faraday,
                           scheduler=load_sched,
@@ -249,37 +285,7 @@ def generate_experiment_header(slicename=None,
                           command=Run("rhubarbe-wait ", *node_ids,
                                       label="rwait")
                           )
-    if list_sdr_on:
 
-        sdr_sched = Scheduler(required=check_lease,
-                               scheduler=scheduler,
-                               label="Turn on sdr")
-        negated_sdr = []
-        sdrs = []
-        for sdr in list_sdr_on:
-            negated_sdr.append("~{}".format(r2lab_hostname(sdr)))
-            sdrs.append("{}".format(r2lab_hostname(sdr)))
-        sdroff_job = SshJob(
-                             node=faraday,
-                             scheduler=sdr_sched,
-                             verbose=verbose_jobs,
-                             label="rhubarbe-sdroff {}"
-                             .format(negated_sdr),
-                             command=Run("rhubarbe-usrpoff -a ", *negated_sdr,
-                                         label="turn off every sdr except {}"
-                                         .format(" ".join(sdrs))
-                                         )
-                             )
-        sdron_job = SshJob(
-                             node=faraday,
-                             scheduler=sdr_sched,
-                             required=sdroff_job,
-                             verbose=verbose_jobs,
-                             label="rhubarbe-sdron {}"
-                             .format(sdrs),
-                             command=Run("rhubarbe-usrpon", *sdrs,
-                                         label="turn on sdr {}"
-                                         .format(" ".join(sdrs))
-                                         )
-                             )
+
+
     return scheduler
