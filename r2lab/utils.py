@@ -140,7 +140,7 @@ class r2labFalseStartError(Exception):
 def load_option(image="_default", timeout=300, bandwidth=500, curses=False,
                 no_reset=True):
     """
-    Wrapper to generate correct tupple use in the generate_experiment_header
+    Wrapper to generate correct rhubarbe image command line
     """
     image_load = ""
     if image != "_default":
