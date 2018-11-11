@@ -34,6 +34,6 @@ class Tests(TestCase):
     def test_bokeh(self):
         themap = BokehR2labMap()
         self._build_and_show(themap, "bokeh map")
-        self.assertEqual(themap.position(1), (0, 5))
-        self.assertEqual(themap.position(11), (2, 5))
-        self.assertEqual(themap.position(37), (8, 1))
+        self.assertEqual(themap.position(1), (1, 5))
+        self.assertEqual(themap.position(11), (3, 5))
+        self.assertEqual(themap.position(37), (9, 1))

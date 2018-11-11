@@ -25,3 +25,8 @@ try:
     from .sidecar import R2labSidecar
 except ModuleNotFoundError:
     print("Warning: could not import module socketIO_client")
+
+try:
+    from .mapdataframe import MapDataFrame
+except ModuleNotFoundError:
+    print("Warning: could not import module pandas")

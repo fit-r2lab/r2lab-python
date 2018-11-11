@@ -61,7 +61,7 @@ class R2labMap:
         Something that can be used to create a pandas index on the nodes
         essentially this is range(1, 38)
         """
-        return self.node_to_position.keys()
+        return sorted(self.node_to_position.keys())
 
     def position(self, node):
         """
@@ -106,5 +106,6 @@ class R2labMap:
 
 class BokehR2labMap(R2labMap):
 
+    # start at 1 x 1, plus Y goes upwards in bokeh
     def __init__(self):
-        super().__init__(swap_y=True, offset_y=True)
+        super().__init__(offset_x=1, offset_y=1, swap_y=True)
