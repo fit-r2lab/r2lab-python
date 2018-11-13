@@ -1,5 +1,12 @@
 # ChangeLog
 
+## 0.2.0 - 2018 Nov 13
+
+* new class R2labMap for dealing with node 2D coordinates
+* new class MapDataFrame
+* these 2 being adequate for heatmap-oriented experiments
+  like radiomap and batman-vs-olsr
+
 ## 0.1.1 - 2018 Mar 26
 
 * r2lab_hostname now comes in 2 new variants r2lab_data and r2lab_reboot
