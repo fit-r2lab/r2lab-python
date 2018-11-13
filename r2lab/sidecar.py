@@ -166,13 +166,13 @@ class R2labSidecar(SocketIO):
 
     def set_nodes_triples(self, *triples):
         """
-        Args:
-            each argument is expected to be a tuple or list
-                of the form `id, attribute, value`. The same node
-                id can be used in several triples.
+        Parameters:
+          triples: each argument is expected to be a tuple (or list)
+            of the form ``id, attribute, value``. The same node
+            id can be used in several triples.
 
         Example:
-            to mark node 1 as unavailable and node 2 as turned off::
+            To mark node 1 as unavailable and node 2 as turned off::
 
                 sidecar.set_nodes_triples(
                     (1, 'available', 'ok'),
@@ -185,13 +185,13 @@ class R2labSidecar(SocketIO):
 
     def set_node_attribute(self, id, attribute, value):
         """
-        Args:
+        Parameters:
             id: a node_id as an int or str
             attribute(str): the name of the attribute to be written
             value(str): the new value
 
         Example:
-            to mark node 1 as unavailable::
+            To mark node 1 as unavailable::
 
                 sidecar.set_node_attribute(1, 'available', 'ko')
         """

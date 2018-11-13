@@ -72,7 +72,8 @@ def r2lab_parse_slice(slice):
 
 
 def find_local_embedded_script(script, extra_paths=None):
-    """This helper is designed to find a script that typically comes with
+    """
+    This helper is designed to find a script that typically comes with
     the ``r2lab-embedded`` repo, specifically in its ``shell``
     subdirectory.
 

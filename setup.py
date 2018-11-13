@@ -5,7 +5,7 @@ import setuptools
 
 # don't try to import the r2lab package at this early point
 # as this would require asyncssh which might not be installed yet
-from r2lab.version import version as __version__
+from r2lab.version import __version__
 
 long_description = "See README at https://github.com/fit-r2lab/r2lab-python/blob/master/README.md"
 

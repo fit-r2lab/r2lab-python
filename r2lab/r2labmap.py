@@ -1,12 +1,14 @@
 """
-basic tool to translate node ids into positions on a grid
-
-depending on the underlying visual tool,
-several orientations / numberings may be needed
-
+The R2labMap class is a convenience for mapping node numbers to a
+2-dimensional grid coordinates, and backwards.
 """
 
-class R2labMap:
+class R2labMapGeneric:
+    """
+    The most general form allows to specifiy
+    mapper functions in both directions.
+    Or to simply specify an integer offset and boolean swap.
+    """
 
 # pylint: disable=c0326
     POSITIONS = [
@@ -18,28 +20,56 @@ class R2labMap:
     ]
 # pylint: enable=c0326
 
-    WIDTH = len(POSITIONS[0])
-    HEIGHT = len(POSITIONS)
+    @staticmethod
+    def _width():
+        return len(R2labMapGeneric.POSITIONS[0])
+
+    @staticmethod
+    def _height():
+        return len(R2labMapGeneric.POSITIONS)
 
     def __init__(self, *,
-                 offset_x = 0, offset_y = 0,
-                 swap_x=False, swap_y=False):
+                 offset_x=0, offset_y=0,
+                 swap_x=False, swap_y=False,
+                 map_x=None, map_y=None):
         """
-        typically map functions need be something like
-        sx = lambda x: x+1 if you want to start numbering at 1
-        sy = lambda y: 4-x if you want to have low y numbered under
-        sy = lambda y: 5-x for same direction but start at 0
-        to the lower row above
-        """
-        self.map_x = lambda x: offset_x + x
-        # if swap_x =
-        if swap_x:
-            self.map_x = lambda x: offset_x + self.WIDTH - 1 - x
-        self.map_y = lambda y: offset_y + y
-        if swap_y:
-            self.map_y = lambda y: offset_y + self.HEIGHT - 1 - y
+        By default, node 1 is on coordinates (0, 0),
+        and node 37 is at (8, 4).
+        The parameters allow to implement other mappings.
 
-        print("()")
+        Parameters:
+          map_x(function): function that maps integers to integers;
+            if provided, the `swap_x` and `offset_x` are ignored;
+          swap_x(bool): if set, the x axis is reversed; that is,
+            with only swap_x set, node 1 becomes (8, 0) and
+            node 37 becomes (0, 4)
+          offset_x(int): added in the X direction
+
+        And likewise in the Y dimension.
+
+        Examples:
+          This means that typically map functions need be something
+          like:
+            * ``map_x = lambda x: x+1`` if you want to start numbering at 1
+            * map_y = lambda y: 4-x if you want to have y go upwards
+            * map_y = lambda y: 5-y for same direction but start at 1
+        """
+        # most general form if for you to provide the map function
+        if map_x:
+            self.map_x = map_x
+        # otherwise you can provide swap_x and/or offset_x
+        elif swap_x:
+            self.map_x = lambda x: offset_x + self._width() - 1 - x
+        else:
+            self.map_x = lambda x: offset_x + x
+
+        # same in y
+        if map_y:
+            self.map_y = map_y
+        elif swap_y:
+            self.map_y = lambda y: offset_y + self._height() - 1 - y
+        else:
+            self.map_y = lambda y: offset_y + y
 
         # computes a dictionary that maps
         # a node_id to a tuple of coords (x, y)
@@ -58,8 +88,8 @@ class R2labMap:
 
     def indexes(self):
         """
-        Something that can be used to create a pandas index on the nodes
-        essentially this is range(1, 38)
+        Object that can be used to create a pandas index
+        on the nodes; essentially this is range(1, 38)
         """
         return sorted(self.node_to_position.keys())
 
@@ -83,9 +113,9 @@ class R2labMap:
           x: coordinate along the horizontal axis - int or str
           y: coordinate along the vertical axis - int or str
         Returns:
-          int: a node number, in the range (1..37)
+          int: a node number, in the range (1..37) - or None
         """
-        return self.position_to_node[(x, y)]
+        return self.position_to_node.get((x, y), None)
 
     def iterate_nodes(self):
         """
@@ -104,8 +134,14 @@ class R2labMap:
                 if not node_id:
                     yield self.map_x(x), self.map_y(y)
 
-class BokehR2labMap(R2labMap):
+class R2labMap(R2labMapGeneric):
+    """
+    Inherits :class:`~r2lab.r2labmap.R2labMapGeneric`
 
-    # start at 1 x 1, plus Y goes upwards in bokeh
+    A map object where coordinates start at 1,
+    and where the Y coordinate goes upwards;
+    so typically in this map node 1 is at (1, 5)
+    and node 37 is at (9, 1).
+    """
     def __init__(self):
         super().__init__(offset_x=1, offset_y=1, swap_y=True)

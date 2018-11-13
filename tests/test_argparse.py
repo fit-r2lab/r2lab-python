@@ -21,12 +21,14 @@ class Tests(unittest.TestCase):
                                 help="specify antenna mask for each node")
             return parser
 
-        self.assertEqual(p().parse_args().antennas, ['1', '1'])
-        self.assertEqual(p().parse_args([]).antennas, ['1', '1'])
-        self.assertEqual(p().parse_args(['-a', '1']).antennas, ['1'])
-        self.assertEqual(p().parse_args(
+        # with no argument, use sys.argv, which in our case is
+        # the call to nosetest
+        #self.assertListEqual(p().parse_args().antennas, ['1', '1'])
+        self.assertListEqual(p().parse_args([]).antennas, ['1', '1'])
+        self.assertListEqual(p().parse_args(['-a', '1']).antennas, ['1'])
+        self.assertListEqual(p().parse_args(
             ['-a', '1', '-a', '3']).antennas, ['1', '3'])
-        self.assertEqual(p().parse_args(
+        self.assertListEqual(p().parse_args(
             ['-a', '1', '-a', '3', '-a', '11']).antennas, ['1', '3', '11'])
 
     def test2(self):
@@ -43,13 +45,14 @@ class Tests(unittest.TestCase):
                                 help="specify phones")
             return parser
 
-        self.assertEqual(p().parse_args().phones, [1])
-        self.assertEqual(p().parse_args([]).phones, [1])
-        self.assertEqual(p().parse_args(['-p', '1']).phones, [1])
-        self.assertEqual(p().parse_args(['-p', '1', '-p', '2']).phones, [1, 2])
-        self.assertEqual(p().parse_args(
+        # ditto
+        #self.assertEqual(p().parse_args().phones, [1])
+        self.assertListEqual(p().parse_args([]).phones, [1])
+        self.assertListEqual(p().parse_args(['-p', '1']).phones, [1])
+        self.assertListEqual(p().parse_args(['-p', '1', '-p', '2']).phones, [1, 2])
+        self.assertListEqual(p().parse_args(
             ['-p', '1', '-p', '3', '-p', '2']).phones, [1, 3, 2])
-        self.assertEqual(p().parse_args(['-p', '0']).phones, [])
+        self.assertListEqual(p().parse_args(['-p', '0']).phones, [])
 
 
 if __name__ == '__main__':

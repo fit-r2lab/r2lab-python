@@ -2,7 +2,7 @@
 
 from unittest import TestCase
 
-from r2lab import R2labMap, BokehR2labMap
+from r2lab.r2labmap import R2labMapGeneric, R2labMap
 
 # this is for debug/devel, at the very least
 # it needs the logging config file mentioned here
@@ -23,17 +23,17 @@ class Tests(TestCase):
             print(f"H -> {gridx} x {gridy} | ", end="")
         print()
 
-    def test_standard(self):
-        themap = R2labMap()
-        self._build_and_show(themap, "standard map")
+    def test_raw(self):
+        themap = R2labMapGeneric()
+        self._build_and_show(themap, "raw map")
         self.assertEqual(themap.position(1), (0, 0))
         self.assertEqual(themap.position(11), (2, 0))
         self.assertEqual(themap.position(37), (8, 4))
         self.assertEqual(themap.node(8, 4), 37)
 
-    def test_bokeh(self):
-        themap = BokehR2labMap()
-        self._build_and_show(themap, "bokeh map")
+    def test_usual(self):
+        themap = R2labMap()
+        self._build_and_show(themap, "standard map")
         self.assertEqual(themap.position(1), (1, 5))
         self.assertEqual(themap.position(11), (3, 5))
         self.assertEqual(themap.position(37), (9, 1))

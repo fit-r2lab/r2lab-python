@@ -4,7 +4,7 @@
 
 LIBRARY = r2lab
 
-VERSION = $(shell python3 -c "from $(LIBRARY).version import version; print(version)")
+VERSION = $(shell python3 -c "from $(LIBRARY) import __version__; print(__version__)")
 VERSIONTAG = $(LIBRARY)-$(VERSION)
 GIT-TAG-ALREADY-SET = $(shell git tag | grep '^$(VERSIONTAG)$$')
 # to check for uncommitted changes
@@ -21,11 +21,11 @@ pypi:
 
 # it can be convenient to define a test entry, say testpypi, in your .pypirc
 # that points at the testpypi public site
-# no upload to build.onelab.eu is done in this case 
+# no upload to build.onelab.eu is done in this case
 # try it out with
 # pip install -i https://testpypi.python.org/pypi $(LIBRARY)
 # dependencies need to be managed manually though
-testpypi: 
+testpypi:
 	./setup.py sdist upload -r testpypi
 
 ##############################
@@ -35,8 +35,16 @@ tags:
 .PHONY: tags
 
 ##############################
+#python3 -m unittest
 tests test:
-	python3 -m unittest
+	nosetests --nologcapture tests
+
+# when tests fail: pick your choice:
+# turn log capture back on (remove --nologcapture)
+# turn on actual output : run nose with -s or --nocapture
+# pipe all in less : merge stderr in stdout
+debugtest dbgtest:
+	nosetests --nocapture tests 2>&1
 
 test-sidecar:
 	python3 -m unittest tests.test_sidecar
@@ -48,13 +56,13 @@ test-sidecar-local:
 .PHONY: tests test test-sidecar
 
 ########## sphinx
-sphinx doc:
+sphinx doc html:
 	$(MAKE) -C sphinx html
 
-sphinx-clean doc-clean:
+sphinx-clean doc-clean html-clean:
 	$(MAKE) -C sphinx clean
 
-.PHONY: sphinx doc sphinx-clean doc-clean
+.PHONY: sphinx doc sphinx-clean doc-clean html html-clean
 
 ##########
 pep8:

@@ -2,7 +2,7 @@
 The r2lab package
 """
 
-from .version import version as __version__
+from .version import __version__
 
 from .utils import (
     r2lab_hostname,
@@ -17,7 +17,7 @@ from .argparse_additions import (
     ListOfChoicesNullReset,
 )
 
-from .r2labmap import R2labMap, BokehR2labMap
+from .r2labmap import R2labMap, R2labMapGeneric
 
 # protect for install-time when dependencies are not yet installed
 try:

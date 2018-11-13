@@ -1,7 +1,7 @@
 """
-    The R2lab dataframe, that is a standard DataFrame
-for storing results on a node by node basis together with their
-map coordinates
+A standard pandas ``DataFrame`` for storing results
+on a node by node basis together with their
+map coordinates.
 """
 
 from pandas import DataFrame
@@ -9,14 +9,15 @@ from pandas import DataFrame
 class MapDataFrame(DataFrame):
     """
 
-    A R2lab MapDataFrame is a dataframe that has one line per node, together with
-    their x and y coordinates has specified in the map object, plus additional
+    A ``MapDataFrame`` is a dataframe that has one line per node, together with
+    their x and y coordinates as specified in the map object, plus additional
     columns as specified in the constructor. Is is indexed by node numbers.
 
-    Parameter:
-      map: a Map object that primarily gives the nodes coordinates
-      columns: an dictionary - preferrably ordered if using an older Python -
-        that specifies the column name (key) and the initial value (value)
+    Parameters:
+      map: a R2labMap object that primarily provides nodes coordinates
+      columns: an dictionary - preferrably an ``OrderedDict`` if using
+        an older Python - that specifies each column name (key)
+        and corresponding initial value (value).
     """
 
     def __init__(self, r2labmap, columns=None):

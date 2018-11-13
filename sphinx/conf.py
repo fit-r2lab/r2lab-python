@@ -18,16 +18,16 @@ from pathlib import Path
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here.
-sys.path.insert(0, Path("../..").resolve())
+sys.path.insert(0, str(Path("..").resolve()))
 
-print("current directory is", os.getcwd())
+print("current directory is", Path('.').resolve())
 for path in sys.path:
     print("in path", path)
 
 from sys import version_info as python_version
 print("python version", python_version)
 
-from r2lab.version import version as r2lab_version
+from r2lab.version import __version__ as r2lab_version
 
 # -- General configuration -----------------------------------------------------
 

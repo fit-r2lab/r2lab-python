@@ -2,11 +2,20 @@ The r2lab API
 ========================================
 
 
-General utilities
------------------
+2-Dimension grid
+----------------
 
-.. automodule:: r2lab.utils
+.. automodule:: r2lab.r2labmap
                 :members:
+
+------------
+
+Dataframes
+----------
+
+.. automodule:: r2lab.mapdataframe
+                :members:
+
 
 ------------
 
@@ -18,9 +27,16 @@ Probing the testbed status
 
 ------------
 
+General utilities
+-----------------
+
+.. automodule:: r2lab.utils
+                :members:
+
+------------
+
 Classes for ``argparse``
 ------------------------
 
 .. automodule:: r2lab.argparse_additions
 		:members:
-
