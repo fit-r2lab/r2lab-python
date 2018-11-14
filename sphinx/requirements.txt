@@ -1,7 +1,7 @@
-orderedset
-apssh
 sphinx-autodoc-typehints
 sphinxcontrib-napoleon
 sphinxcontrib-asyncio
 socketIO-client
-asynciojobs
+orderedset
+apssh
+pandas
