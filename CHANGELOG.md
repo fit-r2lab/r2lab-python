@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 0.2.1 - 2018 Nov 14
+* new function prepare_testbed_scheduler
+
 ## 0.2.0 - 2018 Nov 13
 
 * new class R2labMap for dealing with node 2D coordinates
