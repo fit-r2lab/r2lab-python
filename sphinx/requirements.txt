@@ -1,3 +1,5 @@
+orderedset
+apssh
 sphinx-autodoc-typehints
 sphinxcontrib-napoleon
 sphinxcontrib-asyncio
