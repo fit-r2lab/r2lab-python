@@ -42,8 +42,9 @@ def prepare_testbed_scheduler(                   # pylint: disable=r0913, r0914
         phones_left_alone=None,
         verbose_jobs=False):
     """
-    Wraps a raw experiment scheduler into a larger one that
-    will first take care of preparing the testbed according to specifications.
+    Wraps a raw experiment scheduler into a larger one, that
+    will first take care of preparing the testbed according
+    to specifications.
 
     Parameters:
       gateway_sshnode: the ssh handle to the gateway
