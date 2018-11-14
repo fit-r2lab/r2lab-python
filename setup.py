@@ -11,6 +11,7 @@ long_description = "See README at https://github.com/fit-r2lab/r2lab-python/blob
 
 required_modules = [
     'socketIO-client',
+    'apssh',
 ]
 
 setuptools.setup(

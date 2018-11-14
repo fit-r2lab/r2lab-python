@@ -2,6 +2,14 @@ The r2lab API
 ========================================
 
 
+Testbed preparation
+-------------------
+
+.. automodule:: r2lab.prepare
+                :members:
+
+------------
+
 2-Dimension grid
 ----------------
 
@@ -27,16 +35,16 @@ Probing the testbed status
 
 ------------
 
-General utilities
------------------
-
-.. automodule:: r2lab.utils
-                :members:
-
-------------
-
 Classes for ``argparse``
 ------------------------
 
 .. automodule:: r2lab.argparse_additions
 		:members:
+
+------------
+
+General utilities
+-----------------
+
+.. automodule:: r2lab.utils
+                :members:

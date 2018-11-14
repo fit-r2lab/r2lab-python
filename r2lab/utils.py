@@ -2,14 +2,24 @@ import re
 
 from pathlib import Path
 
-def _r2lab_name(x, prefix='fit'):
-    if isinstance(x, bytes):
-        x = x.decode(encoding='utf-8')
-    if isinstance(x, str):
+PHONES = 2
+
+def r2lab_id(anything):
+    """
+    Returns an integer from an input that can be either ``1`` (int),
+    ``1`` (str), b``1``(bytes), ``01`` (str) ,
+    ``fit1``, ``fit01`` or even ``reboot01``.
+    """
+    if isinstance(anything, bytes):
+        anything = anything.decode(encoding='utf-8')
+    if isinstance(anything, str):
         # ignore all but digits
-        x = re.sub(r'[^0-9]', '', x)
-    x = int(x)
-    return "{}{:02d}".format(prefix, x)
+        anything = re.sub(r'[^0-9]', '', anything)
+    return int(anything)
+
+
+def _r2lab_name(anything, prefix='fit'):
+    return "{}{:02d}".format(prefix, r2lab_id(anything))
 
 
 def r2lab_hostname(x):
