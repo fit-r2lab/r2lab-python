@@ -4,7 +4,7 @@ This module contains a utility for preparing the testbed.
 The logic is that you write a scheduler that implements your
 pure experimental logic.
 
-You can then pass this scheduler to r2lab_prepare_scheduler()
+You can then pass this scheduler to ``r2lab_prepare_scheduler()``,
 that returns a scheduler where your original one is embedded.
 
 This overall scheduler will prepend instructions for preparing the testbed,
@@ -42,9 +42,19 @@ def prepare_testbed_scheduler(                   # pylint: disable=r0913, r0914
         phones_left_alone=None,
         verbose_jobs=False):
     """
-    Wraps a raw experiment scheduler into a larger one, that
-    will first take care of preparing the testbed according
-    to specifications.
+
+    This function is designed as a standard way for experiments to warm up.
+    Experimenters only need to write a scheduler that defines the behaviour
+    of their core experiment, this function will add additional steps that
+    take care of a) checking for a valid lease, b) load images on nodes, and
+    c) turn off unused devices.
+
+    It is generally desirable to write an experiment script that has a
+    `--load/-l` boolean flag; typically, one would use the ``--load`` flag the
+    first time that an experiment is launched during a given timeslot, while
+    subsequent calls won't. That is the purpose of the ``load_flag`` below;
+    when set to False, only step a) is performed, otherwise the resulting
+    scheduler will go for the full monty.
 
     Parameters:
       gateway_sshnode: the ssh handle to the gateway
@@ -61,9 +71,21 @@ def prepare_testbed_scheduler(                   # pylint: disable=r0913, r0914
       The overall scheduler where the input ``experiment_scheduler`` is embedded.
 
     Examples:
-      Specify a mapping like the following:
+      Specify a mapping like the following::
 
-        images_mapping = { "ubuntu" : [1, 4, 5], "gnuradio": [16]}
+          images_mapping = { "ubuntu" : [1, 4, 5], "gnuradio": [16]}
+
+      Note that the format for ``images_mapping``, is flexible;
+      if only one node is to be loaded, the iterable level is optional;
+      also each node can be specified as an ``int``, a ``bytes``, a ``str``,
+      in which case non numeric characters are ignored. So this is a legitimate
+      requirement as well::
+
+        images_mapping = { 'openair-cn': 12 + 4,
+                           'openair-enodeb': ('fit32',),
+                           'ubuntu': {12, 'reboot1', '004',
+                                      'you-get-the-picture-34'}
+        }
     """
 
     # handle default mutable args
@@ -92,7 +114,7 @@ def prepare_testbed_scheduler(                   # pylint: disable=r0913, r0914
     # (*) one job to turn off phones, nodes and usrps
     #     as parallelizing brings no speed up at all
 
-    # xxx ideally we could also probe the testbed to figure out which nodes
+    # todo ideally we could also probe the testbed to figure out which nodes
     # are currently unavailable, and let them alone as well; but well.
 
     # the jobs that we need to wait for before going on with the real stuff
