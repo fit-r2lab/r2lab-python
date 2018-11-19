@@ -23,7 +23,8 @@ from .utils import PHONES, r2lab_id
 # => "rhubarbe off --all ~1,2,5,10,12"
 def _rhubarbe_command(verb, left_alone):
     result = "rhubarbe {} --all".format(verb)
-    result += " ~" + ",".join(str(r2lab_id(x)) for x in left_alone)
+    if left_alone:
+        result += " ~" + ",".join(str(r2lab_id(x)) for x in left_alone)
     return result
 
 def _off_phones(phones):
