@@ -1,5 +1,8 @@
 # ChangeLog
 
+## 0.2.2 - 2018 Nov 20
+* prepare_testbed_scheduler shouldbe OK, at least it runs inside the mosaic demo
+
 ## 0.2.1 - 2018 Nov 14
 * new function prepare_testbed_scheduler
 
