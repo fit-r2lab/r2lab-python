@@ -122,10 +122,13 @@ def prepare_testbed_scheduler(                   # pylint: disable=r0913, r0914
 
     for image, nodes in images_mapping.items():
         # let's be as flexible as possible
-        # (1) atomic types should be allowed
+        # (1) empty node list should be fine
+        if not nodes:
+            continue
+        # (2) atomic types should be allowed
         if isinstance(nodes, (int, str, bytes)):
             nodes = [nodes]
-        # (2) accept all forms of inputs
+        # (3) accept all forms of inputs
         nodes = {r2lab_id(node) for node in nodes}
         duplicates = loaded_nodes & nodes
         if duplicates:
@@ -133,17 +136,21 @@ def prepare_testbed_scheduler(                   # pylint: disable=r0913, r0914
                   .format(duplicates))
         loaded_nodes.update(nodes)
         # for there on we need strings
-        nodes = [str(node) for node in nodes]
+        node_args = " ".join(str(node) for node in nodes)
         octopus.append(
-            SshJob(gateway,
-                   scheduler=scheduler,
-                   required=check_lease,
-                   label=("loading {} on {}"
-                          .format(image, " ".join(nodes))),
-                   command=("rhubarbe load -i {} {}"
-                            .format(image, ",".join(nodes))),
-                   verbose=verbose_jobs,
-                  ))
+            SshJob(
+                gateway,
+                scheduler=scheduler,
+                required=check_lease,
+                label=("loading {} on {}"
+                       .format(image, node_args)),
+                commands=[
+                    Run("rhubarbe load -i {} {}"
+                        .format(image, node_args)),
+                    Run("rhubarbe wait {}" .format(node_args)),
+                ],
+                verbose=verbose_jobs,
+                ))
 
     ### turn off stuff
     # nodes
