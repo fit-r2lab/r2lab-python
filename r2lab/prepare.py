@@ -12,25 +12,22 @@ in terms of loading images on nodes, turning off unused nodes, and similar.
 """
 
 from asynciojobs import Scheduler
-from apssh import SshNode, SshJob, Run
+from apssh import SshNode, SshJob, Run, RunScript
 
-from .utils import PHONES, r2lab_id
+from .utils import PHONES, r2lab_id, find_local_embedded_script
 
+INCLUDES = [find_local_embedded_script(x)
+            for x in ("faraday.sh", "r2labutils.sh")]
 
 # how to run something on all nodes but a specified list
 # be flexible on how to specify that list
 # e.g _rhubarbe_command('off', ['fit1', 'fit02', 5, '10', b'12'])
-# => "rhubarbe off --all ~1,2,5,10,12"
+# => "rhubarbe off --all ~1 ~2 ~5 ~10 ~12"
 def _rhubarbe_command(verb, left_alone):
     result = "rhubarbe {} --all".format(verb)
-    if left_alone:
-        result += " ~" + ",".join(str(r2lab_id(x)) for x in left_alone)
+    for node in left_alone:
+        result += " ~{}".format(node)
     return result
-
-def _off_phones(phones):
-    ids = " ".join(str(r2lab_id(phone)) for phone in phones)
-    return "bash -c 'for id in {ids}; do macphone${{id}} phone-off; done'"\
-           .format(ids=ids)
 
 
 def prepare_testbed_scheduler(                   # pylint: disable=r0913, r0914
@@ -157,6 +154,25 @@ def prepare_testbed_scheduler(                   # pylint: disable=r0913, r0914
     off_phones = set(range(1, PHONES+1)) \
                  - {r2lab_id(ph) for ph in phones_left_alone}
 
+    if off_phones:
+        octopus.append(
+            SshJob(
+                gateway,
+                scheduler=scheduler,
+                required=check_lease,
+                critical=False,
+                commands=[
+                    RunScript(
+                        find_local_embedded_script("faraday.sh"),
+                        "macphone{}".format(phone),
+                        "r2lab-embedded/shell/macphone.sh", "phone-off",
+                        label="turn off phone {}".format(phone),
+                        includes=INCLUDES)
+                    for phone in off_phones],
+                verbose=verbose_jobs)
+            )
+
+
     octopus.append(
         SshJob(gateway,
                scheduler=scheduler,
@@ -165,7 +181,6 @@ def prepare_testbed_scheduler(                   # pylint: disable=r0913, r0914
                commands=[
                    Run(_rhubarbe_command(verb="off", left_alone=dont_off_nodes)),
                    Run(_rhubarbe_command(verb="usrpoff", left_alone=dont_off_sdrs)),
-                   Run(_off_phones(off_phones)),
                ],
                verbose=verbose_jobs,
                ))
