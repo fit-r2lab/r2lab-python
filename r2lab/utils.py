@@ -99,6 +99,8 @@ def find_local_embedded_script(script, extra_paths=None):
     Returns:
         str: a valid path in the local filesystem, or ``None``
 
+    Raises:
+        ``FileNotFoundError(script)`` if script can't be found
 
     Example:
         Search for ``oai-enb.sh`` so as to run it remotely::
@@ -116,10 +118,12 @@ def find_local_embedded_script(script, extra_paths=None):
         Path.home(),
         # for people who have their git root in ~/git
         Path.home() / "git",
+        Path.home() / "fit-r2lab",
         # when in r2lab-demos/one-demo
         Path("../../"),
         # when in r2lab-demos
         Path(".."),
+        Path("."),
     ]
 
     # convert extra paths into Paths
@@ -138,3 +142,4 @@ def find_local_embedded_script(script, extra_paths=None):
     for path in heuritics:
         for relative in relatives:
             print("W: searched in {}".format(path / relative))
+    raise FileNotFoundError(script)

@@ -48,11 +48,12 @@ class Tests(unittest.TestCase):
                          ('inria_foo', 'etourdi.pl.sophia.inria.fr'))
 
     def test_find_local_embedded_script(self):
+        # this is local to my setup unfortunately
         self.assertEqual(
-            find_local_embedded_script("oai-enb.sh"),
-            str(Path.home() / 'git' / 'r2lab-embedded' / 'shell' / 'oai-enb.sh'))
-        self.assertIsNone(
-            find_local_embedded_script("inexistent"))
+            find_local_embedded_script("mosaic-common.sh"),
+            str(Path.home() / 'git' / 'r2lab-embedded' / 'shell' / 'mosaic-common.sh'))
+        with self.assertRaises(FileNotFoundError) as context:
+            find_local_embedded_script("inexistent")
 
 
 
