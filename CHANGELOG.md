@@ -1,5 +1,9 @@
 # ChangeLog
 
+## 0.2.4 - 2018 Dec 17
+* find_local_embedded_script has more heuristics
+* find_local_embedded_script raises FileNotFoundError in case of failure
+
 ## 0.2.3 - 2018 Nov 20
 * prepare_testbed_scheduler should be OK, at least it runs inside the mosaic demo
 * 0.2.2 and 0.2.1 were **broken**
