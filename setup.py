@@ -11,9 +11,22 @@ from r2lab.version import __version__
 LONG_DESCRIPTION = "See README at https://github.com/fit-r2lab/r2lab-python/blob/master/README.md"
 
 REQUIRED_MODULES = [
-    'socketIO-client',
+    'websockets',
     'apssh',
 ]
+
+EXTRAS_REQUIRE = {
+    'sidecar': ['websockets'],
+    'prepare': ['apssh'],
+    'mapdataframe': ['pandas'],
+}
+
+# pip3 install r2lab[all]
+# installs all extras
+
+from functools import reduce
+EXTRAS_REQUIRE['all'] = list(set(
+    reduce(lambda l1, l2: l1+l2, EXTRAS_REQUIRE.values())))
 
 setuptools.setup(
     name="r2lab",
@@ -26,6 +39,7 @@ setuptools.setup(
     url="http://r2lab.readthedocs.io",
     packages=['r2lab'],
     install_requires=REQUIRED_MODULES,
+    extras_require=EXTRAS_REQUIRE,
     classifiers=[
         "Development Status :: 4 - Beta",
         "Environment :: Console",

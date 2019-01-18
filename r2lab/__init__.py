@@ -16,13 +16,13 @@ from .r2labmap import R2labMap, R2labMapGeneric
 try:
     from .mapdataframe import MapDataFrame
 except ModuleNotFoundError:
-    print("Warning: could not import module pandas")
+    print("Warning: no module pandas - MapDataFrame not available")
 
 try:
-    import socketIO_client
-    from .sidecar import R2labSidecar
+    import websockets
+    from .sidecar import SidecarClient
 except ModuleNotFoundError:
-    print("Warning: could not import module socketIO_client")
+    print("Warning: no module websockets - SidecarClient not available")
 
 from .argparse_additions import (
     ListOfChoices,
