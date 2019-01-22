@@ -14,15 +14,11 @@ to instruct it that some nodes are available or not
 import json
 from argparse import ArgumentParser
 
-from r2lab import R2labSidecar
+from r2lab import SidecarSyncClient
 
 # globals
-channel = "info:nodes"
-default_sidecar_url = "https://r2lab.inria.fr:999/"
-
-# check if run as 'available.py' or 'unavailable.py'
-import sys
-available_value = 'ko' if 'un' in sys.argv[0] else 'ok'
+default_sidecar_url = "wss://r2lab.inria.fr:999/"
+devel_sidecar_url = "ws://localhost:10000/"
 
 # parse args
 parser = ArgumentParser()
@@ -31,8 +27,20 @@ parser.add_argument("-u", "--sidecar-url", dest="sidecar_url",
                     default=default_sidecar_url,
                     help="url for thesidecar server (default={})"
                     .format(default_sidecar_url))
-parser.add_argument("-d", "--debug", default=False, action='store_true')
+parser.add_argument("-d", "--devel",
+                    default=False, action='store_true')
+# parser.add_argument("-v", "--verbose", default=False, action='store_true')
 args = parser.parse_args()
+
+
+# check if run as 'available.py' or 'unavailable.py'
+import sys
+available_value = 'ko' if 'un' in sys.argv[0] else 'ok'
+
+if args.devel:
+    url = devel_sidecar_url
+else:
+    url = args.sidecar_url
 
 
 def check_valid(node):
@@ -47,7 +55,6 @@ if invalid_nodes:
 
 triples = [(node, 'available', available_value) for node in args.nodes]
 
-url = args.sidecar_url
 print("Connecting to sidecar at {}".format(url))
-with R2labSidecar(url, debug=args.debug) as sidecar:
+with SidecarSyncClient(url) as sidecar:
     sidecar.set_nodes_triples(*triples)

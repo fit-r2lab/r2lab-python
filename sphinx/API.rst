@@ -30,7 +30,7 @@ Dataframes
 Probing the testbed status
 --------------------------
 
-.. automodule:: r2lab.sidecar_async
+.. automodule:: r2lab.sidecar
                 :members:
 
 ------------

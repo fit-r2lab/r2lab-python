@@ -15,7 +15,7 @@ import logging
 import asyncio
 import websockets
 
-from .sidecar_payload import Payload
+from .sidecar_payload import SidecarPayload as Payload
 
 
 default_sidecar_url = 'wss://r2lab.inria.fr:999/'
@@ -48,21 +48,35 @@ class SidecarProtocol(websockets.client.WebSocketClientProtocol):
     of the R2lab sidecar system.
     """
 
-    async def _send_payload(self, payload):
+    async def send_payload(self, payload):
+        """
+        Send a :class:`~r2lab.sidecar_payload.SidecarPayload`
+        object.
+        """
         return await self.send(payload.string)
 
-    async def _recv_payload(self):
+    async def recv_payload(self):
+        """
+        Receives and returns a
+        :class:`~r2lab.sidecar_payload.SidecarPayload` object.
+        """
         wired = await self.recv()
         return Payload(string=wired)
 
 
-    async def _send_umbrella(self, category, action, message):
-        return await self._send_payload(
+    async def send_umbrella(self, category, action, message):
+        """
+        Set one payload, constructed from its parts
+        """
+        return await self.send_payload(
             Payload(
                 umbrella=dict(category=category, action=action, message=message)))
 
-    async def _recv_umbrella(self):
-        payload = await self._recv_payload()
+    async def recv_umbrella(self):
+        """
+        Read one payload, and returns it as a dict with 3 keys.
+        """
+        payload = await self.recv_payload()
         return payload.umbrella
 
 
@@ -73,9 +87,9 @@ class SidecarProtocol(websockets.client.WebSocketClientProtocol):
         # so, wait until we receive corresponding 'info'
         # improvement could be to repeat the 'request' after a timeout
         infos = None
-        await self._send_umbrella(category, 'request', "PLEASE")
+        await self.send_umbrella(category, 'request', "PLEASE")
         while True:
-            umbrella = await self._recv_umbrella()
+            umbrella = await self.recv_umbrella()
             logging.debug(f"receives answer={umbrella}")
             if (umbrella['category'] == category
                     and umbrella['action'] == 'info'):
@@ -89,8 +103,8 @@ class SidecarProtocol(websockets.client.WebSocketClientProtocol):
         # and emit that on the proper channel
         # for that we start with a hash id -> info
         # send infos on proper channel and json-encoded
-        payload = Payload().fill_triples(category, triples)
-        await self._send_payload(payload)
+        payload = Payload().fill_from_triples(category, triples)
+        await self.send_payload(payload)
 
 
     # nodes
@@ -110,11 +124,6 @@ class SidecarProtocol(websockets.client.WebSocketClientProtocol):
                     nodes_status = await sidecar.nodes_status()
                 await sidecar.wait_closed()
                 print(nodes_status[1]['usrp_type'])
-
-        .. warning::
-          As of this rough implementation, it is recommended to use this method
-          on a freshly opened object. When used on an older object, you may, and probably
-          will, receive a result that is older than the time where you posted a request.
 
         """
         return await self._probe_category('nodes')
@@ -175,7 +184,7 @@ class SidecarProtocol(websockets.client.WebSocketClientProtocol):
 
 
 
-class AsyncClient(websockets.connect):
+class SidecarAsyncClient(websockets.connect):
 
     """
     A handler to reach the testbed sidecar server, and to get the
@@ -195,18 +204,26 @@ class AsyncClient(websockets.connect):
 
 # --------
 
-class SyncClient:
+class SidecarSyncClient:
     """
     A synchronous wrapper to perform the same operations
     from sequential code without having to worry about the
     event loop, asynchronous context manager and coroutine business.
 
-    WARNING: this is a convenience only, it would be unwise, obviously,
-    to call this from asynchronous code. If it works at all.
+    Example:
+        Set a node as available from some synchronous code::
+
+            with SidecarSyncClient(url) as sidecar:
+                sidecar.set_node_attribute(1, 'available', 'ok')
+
+    .. warning::
+      This is a convenience only, it would be unwise, obviously,
+      to call this from asynchronous code; if it works at all.
+      Use ``SidecarAsyncClient`` instead in this use case.
     """
 
     def __init__(self, url, *args, **kwds):
-        self.aclient = AsyncClient(url, *args, **kwds)
+        self.aclient = SidecarAsyncClient(url, *args, **kwds)
         self.proto = None
 
     def connect(self):

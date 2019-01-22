@@ -23,16 +23,11 @@ except ModuleNotFoundError:
 
 
 try:
-    import websockets
     from .sidecar import (
-        AsyncClient as SidecarAsyncClient,
-        SyncClient as SidecarSyncClient,
-    )
+        SidecarAsyncClient, SidecarSyncClient, default_sidecar_url)
+    from .sidecar_payload import SidecarPayload
 except ModuleNotFoundError:
     print("Warning: no module websockets - sidecar clients not available")
-
-# from .sidecar_sync import SyncClient as SidecarProxy
-
 
 
 from .argparse_additions import (

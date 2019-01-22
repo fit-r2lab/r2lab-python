@@ -28,7 +28,7 @@ SUPPORTED = {
 
 
 
-class Payload:
+class SidecarPayload:
 
     """
     A Payload instance models what goes in one websockets message
@@ -100,9 +100,20 @@ class Payload:
     string = property(_get_string, _set_string)
 
 
+    # another common need is, you have the 'message' part
+    # as a list of infos already
+    # and want to send it in a 'category'
+    # in this case the action is always 'info'
+    def fill_from_infos(self, infos, category='nodes'):
+        self.umbrella = dict(category=category,
+                             action='info',
+                             message=infos)
+        return self
+
+
     # set several attributes in one message
     # a triple is an (id, attribute, value)
-    def fill_triples(self, category, triples):
+    def fill_from_triples(self, category, triples):
         """
         Fills payload object from category and triples,
         which must be a list of unpackable objects of the form
@@ -116,7 +127,4 @@ class Payload:
                 info_by_id[oid] = {'id': oid}
             info_by_id[oid][attribute] = value
         infos = list(info_by_id.values())
-        self.umbrella = dict(category=category,
-                             action='info',
-                             message=infos)
-        return self
+        return self.fill_from_infos(infos)
