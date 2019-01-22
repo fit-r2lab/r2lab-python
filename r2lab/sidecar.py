@@ -1,76 +1,69 @@
 #!/usr/bin/env python3
 
 """
-The R2lab sidecar server is a websocket service
+Sidecar client(s).
+
+The R2lab sidecar is a websocket service
 that runs on wss://r2lab.inria.fr:999/
 and that exposes the status of the testbed.
 """
 
-import json
+# pylint: disable=w1203
 
-from contextlib import contextmanager
+import logging
 
+import asyncio
 import websockets
+
+from .sidecar_payload import Payload
 
 
 default_sidecar_url = 'wss://r2lab.inria.fr:999/'
 
-# the attributes of interest, and their possible values
-# this for now is for information only
-SUPPORTED = {
-    'nodes': {
-        '__range__': range(1, 38),
-        'available': ("on", "off"),
-        'usrp_type': ("none", "b210", "n210", "usrp1", "usrp2",
-                      "limesdr", "LEAT LoRa", "e3372"),
-        # this is meaningful for b210 nodes only
-        'usrp_duplexer': ("for UE", "for eNB", "none"),
-    },
-    'phones': {
-        '__range__': range(1, 2),
-        'airplane_mode': ("on", "off"),
-    }
-}
-
 # provide a simpler way to turn on debugging
-import logging
 logging.basicConfig(level=logging.INFO)
 
-def websockets_logging_to_stdout(level):
+def _websockets_logging_to_stdout(level):
     logger = logging.getLogger('sidecar')
     logger.setLevel(level)
-    ch = logging.StreamHandler()
-    ch.setLevel(level)
+    channel = logging.StreamHandler()
+    channel.setLevel(level)
     formatter = logging.Formatter(
         "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         datefmt="%m-%d %H:%M:%S")
-    ch.setFormatter(formatter)
-    logger.addHandler(ch)
+    channel.setFormatter(formatter)
+    logger.addHandler(channel)
     return logger
 
 
-
 # when doing
-# async with SidecarClient(url) as proxy:
+# async with AsyncSidecarProxy(url) as proxy:
 # the proxy variable actually points at the underlying protocol
 # so that's where to add our send / receive methods
 
-class SidecarClientProtocol(websockets.client.WebSocketClientProtocol):
+class SidecarProtocol(websockets.client.WebSocketClientProtocol):
+
+    """
+    The SidecarProtocol class is an asyncio-compliant implementation
+    of the R2lab sidecar system.
+    """
+
+    async def _send_payload(self, payload):
+        return await self.send(payload.string)
+
+    async def _recv_payload(self):
+        wired = await self.recv()
+        return Payload(string=wired)
+
 
     async def _send_umbrella(self, category, action, message):
-        blob = dict(category=category, action=action, message=message)
-        text = json.dumps(blob)
-        return await self.send(text)
-
+        return await self._send_payload(
+            Payload(
+                umbrella=dict(category=category, action=action, message=message)))
 
     async def _recv_umbrella(self):
-        text = await self.connection.recv()
-        blob = json.loads(text)
-        if 'category' in blob and 'action' in 'blob' and 'message' in blob:
-            return blob
-        else:
-            logging.error("Received message not a r2lab triplet")
-            return {}
+        payload = await self._recv_payload()
+        return payload.umbrella
 
 
     async def _probe_category(self, category):
@@ -82,9 +75,8 @@ class SidecarClientProtocol(websockets.client.WebSocketClientProtocol):
         infos = None
         await self._send_umbrella(category, 'request', "PLEASE")
         while True:
-            answer = await self.recv()
-            logging.info(f"receives answer={answer}")
-            umbrella = json.loads(answer)
+            umbrella = await self._recv_umbrella()
+            logging.debug(f"receives answer={umbrella}")
             if (umbrella['category'] == category
                     and umbrella['action'] == 'info'):
                 infos = umbrella['message']
@@ -96,23 +88,16 @@ class SidecarClientProtocol(websockets.client.WebSocketClientProtocol):
         # [ { 'id' : id, 'attibute' : value, ..}, ...]
         # and emit that on the proper channel
         # for that we start with a hash id -> info
-        info_by_id = {}
-        for id, attribute, value in triples:
-            # accept strings
-            id = int(id)
-            if id not in info_by_id:
-                info_by_id[id] = {'id': id}
-            info_by_id[id][attribute] = value
-        infos = list(info_by_id.values())
         # send infos on proper channel and json-encoded
-        await self._send_umbrella(category, 'info', json.dumps(infos))
+        payload = Payload().fill_triples(category, triples)
+        await self._send_payload(payload)
 
 
     # nodes
 
     async def nodes_status(self):
         """
-        A blocking function call that returns the JSON nodes status for the complete testbed.
+        A function call that returns the JSON nodes status for the complete testbed.
 
         Returns:
             A python dictionary indexed by integers 1 to 37, whose values are
@@ -121,8 +106,9 @@ class SidecarClientProtocol(websockets.client.WebSocketClientProtocol):
         Example:
             Get the complete testbed status::
 
-                with SidecarClient() as sidecar:
-                    nodes_status = sidecar.nodes_status()
+                async with SidecarAsyncClient() as sidecar:
+                    nodes_status = await sidecar.nodes_status()
+                await sidecar.wait_closed()
                 print(nodes_status[1]['usrp_type'])
 
         .. warning::
@@ -143,12 +129,10 @@ class SidecarClientProtocol(websockets.client.WebSocketClientProtocol):
         Example:
             To mark node 1 as unavailable and node 2 as turned off::
 
-                sidecar.set_nodes_triples(
+                await sidecar.set_nodes_triples(
                     (1, 'available', 'ok'),
                     (2, 'cmc_on_off', 'off'),
                    )
-
-
         """
         return await self._set_triples('nodes', triples)
 
@@ -162,7 +146,7 @@ class SidecarClientProtocol(websockets.client.WebSocketClientProtocol):
         Example:
             To mark node 1 as unavailable::
 
-                sidecar.set_node_attribute(1, 'available', 'ko')
+                await sidecar.set_node_attribute(1, 'available', 'ko')
         """
         return await self.set_nodes_triples((id, attribute, value))
 
@@ -185,13 +169,13 @@ class SidecarClientProtocol(websockets.client.WebSocketClientProtocol):
             To mark phone 2 as being turned off (although this is constantly
             recomputed by the phones monitor)::
 
-                sidecar.set_phone_attribute(2, 'airplane_mode', 'on')
+                await sidecar.set_phone_attribute(2, 'airplane_mode', 'on')
         """
         return await self.set_phones_triples((id, attribute, value))
 
 
 
-class SidecarClient(websockets.connect):
+class AsyncClient(websockets.connect):
 
     """
     A handler to reach the testbed sidecar server, and to get the
@@ -205,5 +189,59 @@ class SidecarClient(websockets.connect):
     def __init__(self, url, *args, **kwds):
         if 'create_protocol' in kwds:
             logging.error("should not overwrite create_protocol")
-        super().__init__(url, create_protocol=SidecarClientProtocol,
+        super().__init__(url, create_protocol=SidecarProtocol,
                          *args, **kwds)
+
+
+# --------
+
+class SyncClient:
+    """
+    A synchronous wrapper to perform the same operations
+    from sequential code without having to worry about the
+    event loop, asynchronous context manager and coroutine business.
+
+    WARNING: this is a convenience only, it would be unwise, obviously,
+    to call this from asynchronous code. If it works at all.
+    """
+
+    def __init__(self, url, *args, **kwds):
+        self.aclient = AsyncClient(url, *args, **kwds)
+        self.proto = None
+
+    def connect(self):
+        if self.proto:
+            logging.warning("SyncClient already connected")
+        async def coro():
+            self.proto = await self.aclient
+        asyncio.get_event_loop().run_until_complete(coro())
+
+    def close(self):
+        if not self.proto:
+            logging.warning("SyncClient not connected")
+        else:
+            async def coro():
+                await self.proto.close()
+                await self.proto.wait_closed()
+                self.proto = None
+            asyncio.get_event_loop().run_until_complete(coro())
+
+
+    # of course we can't inherit from the async class as-is
+    # so let's wrap the async methods
+    def __getattr__(self, method):
+        #print(f"SyncClient resolving method {method}")
+        if method not in dir(SidecarProtocol):
+            raise AttributeError(f"no such method {method} in SidecarProtocol")
+        def wrapper(*args, **kwds):
+            async def coro():
+                return await getattr(self.proto, method)(*args, **kwds)
+            return asyncio.get_event_loop().run_until_complete(coro())
+        return wrapper
+
+    def __enter__(self):
+        self.connect()
+        return self
+
+    def __exit__(self, exc_type, exc, traceback):
+        self.close()
