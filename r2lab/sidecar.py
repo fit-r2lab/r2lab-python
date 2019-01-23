@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 
 """
-Sidecar client(s).
+The R2lab sidecar is a websocket service that runs on
+``wss://r2lab.inria.fr:999/`` and that exposes the status of the testbed.
 
-The R2lab sidecar is a websocket service
-that runs on wss://r2lab.inria.fr:999/
-and that exposes the status of the testbed.
+This module implements client classes, for interacting with the sidecar service.
+The core of the implementation is asynchronous and ``asyncio``-friendly, but for
+convenience some features are also available to synchronous code through
+wrappers.
 """
 
 # pylint: disable=w1203
@@ -46,6 +48,10 @@ class SidecarProtocol(websockets.client.WebSocketClientProtocol):
     """
     The SidecarProtocol class is an asyncio-compliant implementation
     of the R2lab sidecar system.
+
+    It inherits ``websockets.client.WebSocketClientProtocol``
+    as documented here:
+    https://websockets.readthedocs.io/en/stable/api.html#module-websockets.client
     """
 
     async def send_payload(self, payload):
@@ -122,7 +128,6 @@ class SidecarProtocol(websockets.client.WebSocketClientProtocol):
 
                 async with SidecarAsyncClient() as sidecar:
                     nodes_status = await sidecar.nodes_status()
-                await sidecar.wait_closed()
                 print(nodes_status[1]['usrp_type'])
 
         """
@@ -187,12 +192,17 @@ class SidecarProtocol(websockets.client.WebSocketClientProtocol):
 class SidecarAsyncClient(websockets.connect):
 
     """
-    A handler to reach the testbed sidecar server, and to get the
-    testbed status through that channel.
+    This class behaves as an asynchronous context manager for
+    talking with the R2lab sidecar server.
 
-    The underlying protocol is SidecarProtocol that inherits
-    websockets.client.WebSocketClientProtocol
-    https://websockets.readthedocs.io/en/stable/api.html#module-websockets.client
+    Example:
+        Set a node as available from some asynchronous code::
+
+            async with SidecarSyncClient(url) as sidecar:
+                await sidecar.set_node_attribute(1, 'available', 'ok')
+
+        In this example, the ``sidecar`` object is
+        a :class:`~r2lab.sidecar.SidecarProtocol` instance.
     """
 
     def __init__(self, url, *args, **kwds):
@@ -202,7 +212,8 @@ class SidecarAsyncClient(websockets.connect):
                          *args, **kwds)
 
 
-# --------
+
+# -------- synchronous wrapper
 
 class SidecarSyncClient:
     """
@@ -219,7 +230,8 @@ class SidecarSyncClient:
     .. warning::
       This is a convenience only, it would be unwise, obviously,
       to call this from asynchronous code; if it works at all.
-      Use ``SidecarAsyncClient`` instead in this use case.
+      Use :class:`~r2lab.sidecar.SidecarAsyncClient` instead
+      in this use case.
     """
 
     def __init__(self, url, *args, **kwds):
@@ -239,7 +251,6 @@ class SidecarSyncClient:
         else:
             async def coro():
                 await self.proto.close()
-                await self.proto.wait_closed()
                 self.proto = None
             asyncio.get_event_loop().run_until_complete(coro())
 

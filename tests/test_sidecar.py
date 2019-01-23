@@ -32,7 +32,6 @@ class Tests(TestCase):
 
         async with SidecarAsyncClient(LOCAL_SERVER) as sidecar:
             nodes = await sidecar.nodes_status()
-        await sidecar.wait_closed()
         self.assertIn(nodes[1]['available'], {'ok', 'ko'})
 
     def test_async_ping(self):
@@ -44,7 +43,6 @@ class Tests(TestCase):
         # one connection, one message
         async with SidecarAsyncClient(LOCAL_SERVER) as sidecar:
             await sidecar.set_node_attribute(1, 'available', 'ok')
-        await sidecar.wait_closed()
 
         # reopen the connexion
         # one connection, several messages
@@ -54,7 +52,6 @@ class Tests(TestCase):
             await sidecar.set_node_attribute(1, 'available', 'ok')
             await asyncio.sleep(0.2)
             await sidecar.set_node_attribute(1, 'available', 'ko')
-        await sidecar.wait_closed()
 
         # set attribute and check consistency
         async with SidecarAsyncClient(LOCAL_SERVER) as sidecar:
@@ -62,7 +59,6 @@ class Tests(TestCase):
             nodes = await sidecar.nodes_status()
 #            print("First fetch (expect available=ok) {}".format(nodes[1]))
             self.assertEqual(nodes[1]['available'], 'ok')
-        await sidecar.wait_closed()
 
         # a little more complex
         async with SidecarAsyncClient(LOCAL_SERVER) as sidecar:
@@ -72,7 +68,6 @@ class Tests(TestCase):
 #            print("Second fetch (expect available=ko) {}".format(nodes[1]))
             self.assertEqual(nodes[1]['available'], 'ko')
             self.assertEqual(nodes[2]['available'], 'ok')
-        await sidecar.wait_closed()
 
     def test_async_nodes(self):
         co_run(self.co_nodes())
@@ -85,7 +80,6 @@ class Tests(TestCase):
             phones = await sidecar.phones_status()
             print("First fetch (expect airplane_mode=on) {}".format(phones[1]))
             self.assertEqual(phones[1]['airplane_mode'], 'on')
-        await sidecar.wait_closed()
         # reopen the connexion
         # this is safer because otherwise we may get an older result
         async with SidecarAsyncClient(LOCAL_SERVER) as sidecar:
@@ -100,7 +94,6 @@ class Tests(TestCase):
             print(
                 "Second fetch on phone 2 (expect airplane_mode=on) {}".format(phones[2]))
             self.assertEqual(phones[2]['airplane_mode'], 'on')
-        await sidecar.wait_closed()
 
     def test_async_phones(self):
         co_run(self.co_phones())
@@ -150,7 +143,6 @@ class Tests(TestCase):
     async def co_prod_status(self):
         async with SidecarAsyncClient(PROD_SERVER) as sidecar:
             nodes = sidecar.nodes_status()
-        await sidecar.wait_closed()
         self.assertEqual(nodes[1]['available'], 'ok')
     def prod_status(self):
         co_run(self.co_prod_status())
