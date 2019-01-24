@@ -11,7 +11,6 @@ to instruct it that some nodes are available or not
 #             to maintain the same status over there
 
 
-import json
 from argparse import ArgumentParser
 
 from r2lab import SidecarSyncClient
