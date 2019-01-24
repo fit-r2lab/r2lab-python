@@ -145,7 +145,8 @@ def main():
     cycle = args.cycle
 
     if args.live:
-        to_remove = [ k for k in field_possible_values if 'rx' not in k and 'tx' not in k]
+        to_remove = [ k for k in field_possible_values
+                     if 'rx' not in k and 'tx' not in k]
         for k in to_remove:
             del field_possible_values[k]
 
@@ -154,7 +155,20 @@ def main():
 
     url = args.sidecar_url
     print("Connecting to sidecar at {}".format(url))
-    with SidecarSyncClient(url) as sidecar:
+
+    # for connecting to a https endpoint
+    # because by default openssl has no CA installed
+    # - contrary to the browser model -
+    # we turn off server authentication
+    import websockets
+    secure, *_ = websockets.uri.parse_uri(url)
+    kwds = {}
+    if secure:
+        import ssl
+        # kwds.update(dict(ssl=ssl.create_default_context()))
+        kwds.update(dict(ssl=ssl.SSLContext()))
+
+    with SidecarSyncClient(url, **kwds) as sidecar:
 
         counter = 0
         payload = SidecarPayload()
@@ -178,6 +192,7 @@ def main():
                 sidecar.send_payload(payload)
 
             leases = get_leases()
+            print(f"leases {leases}")
             if leases:
                 payload.fill_from_infos(leases, 'leases')
                 sidecar.send_payload(payload)
