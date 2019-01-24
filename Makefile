@@ -34,6 +34,30 @@ tags:
 
 .PHONY: tags
 
+############################## for deploying before packaging
+# default is to mess with our preplab and let the production
+# site do proper upgrades using pip3
+deployment ?= preplab
+
+ifeq "$(deployment)" "production"
+    DEST=faraday.inria.fr
+else
+    DEST=preplab.pl.sophia.inria.fr
+endif
+
+# installing in /tmp/r2lab-sync for testing
+sync:
+	@echo 'export PYTHONPATH=/tmp/r2lab-sync'
+	rsync -av --relative $$(git ls-files) root@$(DEST):/tmp/r2lab-sync/
+
+faraday:
+	$(MAKE) sync deployment=production
+
+preplab:
+	$(MAKE) sync deployment=preplab
+
+.PHONY: sync faraday preplab
+
 ##############################
 #python3 -m unittest
 tests test:
