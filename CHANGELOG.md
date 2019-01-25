@@ -1,5 +1,11 @@
 # ChangeLog
 
+## 0.5.0 - 2019 Jan 25
+
+* first implementation of SidecarAsyncClient based on websockets
+* examples/ now use this new model, and
+* incorporate animate.py, a sidecar client formerly in the sidecar repo
+
 ## 0.2.4 - 2018 Dec 17
 * find_local_embedded_script has more heuristics
 * find_local_embedded_script raises FileNotFoundError in case of failure
