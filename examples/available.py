@@ -54,6 +54,15 @@ if invalid_nodes:
 
 triples = [(node, 'available', available_value) for node in args.nodes]
 
+import websockets
+secure, *_ = websockets.uri.parse_uri(url)
+kwds = {}
+if secure:
+    import ssl
+    # kwds.update(dict(ssl=ssl.create_default_context()))
+    kwds.update(dict(ssl=ssl.SSLContext()))
+
 print("Connecting to sidecar at {}".format(url))
-with SidecarSyncClient(url) as sidecar:
+
+with SidecarSyncClient(url, **kwds) as sidecar:
     sidecar.set_nodes_triples(*triples)
