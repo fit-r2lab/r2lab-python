@@ -127,4 +127,4 @@ class SidecarPayload:
                 info_by_id[oid] = {'id': oid}
             info_by_id[oid][attribute] = value
         infos = list(info_by_id.values())
-        return self.fill_from_infos(infos)
+        return self.fill_from_infos(infos, category=category)

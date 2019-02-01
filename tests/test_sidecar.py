@@ -38,21 +38,25 @@ class Tests(TestCase):
         co_run(self.co_ping())
 
 
+    DELAY = 0.3
+
     async def co_nodes(self):
 
         # one connection, one message
         async with SidecarAsyncClient(LOCAL_SERVER) as sidecar:
             await sidecar.set_node_attribute(1, 'available', 'ok')
 
+        await asyncio.sleep(self.DELAY)
         # reopen the connexion
         # one connection, several messages
         async with SidecarAsyncClient(LOCAL_SERVER) as sidecar:
             await sidecar.set_node_attribute(1, 'available', 'ko')
-            await asyncio.sleep(0.2)
+            await asyncio.sleep(self.DELAY)
             await sidecar.set_node_attribute(1, 'available', 'ok')
-            await asyncio.sleep(0.2)
+            await asyncio.sleep(self.DELAY)
             await sidecar.set_node_attribute(1, 'available', 'ko')
 
+        await asyncio.sleep(self.DELAY)
         # set attribute and check consistency
         async with SidecarAsyncClient(LOCAL_SERVER) as sidecar:
             await sidecar.set_node_attribute(1, 'available', 'ok')
@@ -60,6 +64,7 @@ class Tests(TestCase):
 #            print("First fetch (expect available=ok) {}".format(nodes[1]))
             self.assertEqual(nodes[1]['available'], 'ok')
 
+        await asyncio.sleep(self.DELAY)
         # a little more complex
         async with SidecarAsyncClient(LOCAL_SERVER) as sidecar:
             await sidecar.set_node_attribute('1', 'available', 'ko')
@@ -80,6 +85,8 @@ class Tests(TestCase):
             phones = await sidecar.phones_status()
             print("First fetch (expect airplane_mode=on) {}".format(phones[1]))
             self.assertEqual(phones[1]['airplane_mode'], 'on')
+
+        await asyncio.sleep(self.DELAY)
         # reopen the connexion
         # this is safer because otherwise we may get an older result
         async with SidecarAsyncClient(LOCAL_SERVER) as sidecar:

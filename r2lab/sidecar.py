@@ -69,6 +69,12 @@ class SidecarProtocol(websockets.client.WebSocketClientProtocol):
         wired = await self.recv()
         return Payload(string=wired)
 
+    # for historical reasons, if 'incremental' is not present
+    # then its a full info message
+    @staticmethod
+    def is_not_incremental(umbrella):
+        return ('incremental' not in umbrella
+                or not umbrella['incremental'])
 
     async def send_umbrella(self, category, action, message):
         """
@@ -98,7 +104,8 @@ class SidecarProtocol(websockets.client.WebSocketClientProtocol):
             umbrella = await self.recv_umbrella()
             logging.debug(f"receives answer={umbrella}")
             if (umbrella['category'] == category
-                    and umbrella['action'] == 'info'):
+                    and umbrella['action'] == 'info'
+                    and self.is_not_incremental(umbrella)):
                 infos = umbrella['message']
                 info_by_id = {info['id']: info for info in infos}
                 return info_by_id
