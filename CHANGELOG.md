@@ -1,5 +1,10 @@
 # ChangeLog
 
+## 0.5.1 - 2019 Feb 1
+
+* fix import prepare that unintentionnally was calling trying to locate faraday.sh and r2labutils.sh
+* available.py knows how to use default loose SSL policy when connecting to a wss:// 
+
 ## 0.5.0 - 2019 Jan 25
 
 * first implementation of SidecarAsyncClient based on websockets
