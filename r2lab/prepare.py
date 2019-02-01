@@ -16,9 +16,6 @@ from apssh import SshNode, SshJob, Run, RunScript
 
 from .utils import PHONES, r2lab_id, find_local_embedded_script
 
-INCLUDES = [find_local_embedded_script(x)
-            for x in ("faraday.sh", "r2labutils.sh")]
-
 # how to run something on all nodes but a specified list
 # be flexible on how to specify that list
 # e.g _rhubarbe_command('off', ['fit1', 'fit02', 5, '10', b'12'])
@@ -161,6 +158,9 @@ def prepare_testbed_scheduler(                   # pylint: disable=r0913, r0914
     off_phones = set(range(1, PHONES+1)) \
                  - {r2lab_id(ph) for ph in phones_left_alone}
 
+    r2lab_includes = [find_local_embedded_script(x)
+                      for x in ("faraday.sh", "r2labutils.sh")]
+
     if off_phones:
         octopus.append(
             SshJob(
@@ -174,7 +174,7 @@ def prepare_testbed_scheduler(                   # pylint: disable=r0913, r0914
                         "macphone{}".format(phone),
                         "r2lab-embedded/shell/macphone.sh", "phone-off",
                         label="turn off phone {}".format(phone),
-                        includes=INCLUDES)
+                        includes=r2lab_includes)
                     for phone in off_phones],
                 verbose=verbose_jobs)
             )
