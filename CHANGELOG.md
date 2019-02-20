@@ -1,5 +1,10 @@
 # ChangeLog
 
+## 0.5.3 - 2019 Feb 20
+
+* Sidecar classes: url now optional; plus, doc on how to turn off SSL certificate verification
+* fixed compliance with readthedocs, to use 3.6 so that f-strings don't break that build
+
 ## 0.5.2 - 2019 Feb 1
 
 * fix import prepare that unintentionnally was calling trying to locate faraday.sh and r2labutils.sh
