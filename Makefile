@@ -59,25 +59,25 @@ preplab:
 .PHONY: sync faraday preplab
 
 ##############################
-#python3 -m unittest
-tests test:
+tests: tests-unittest
+
+tests-nosetest:
 	nosetests --nologcapture tests
 
 # when tests fail: pick your choice:
 # turn log capture back on (remove --nologcapture)
 # turn on actual output : run nose with -s or --nocapture
 # pipe all in less : merge stderr in stdout
-debugtest dbgtest:
+tests-debug:
 	nosetests --nocapture tests 2>&1
+
+tests-unittest:
+	python3 -m unittest discover
 
 test-sidecar:
 	python3 -m unittest tests.test_sidecar
 
-test-sidecar-local:
-	python3 -m unittest tests.test_sidecar.Tests.local_nodes
-
-
-.PHONY: tests test test-sidecar
+.PHONY: tests tests-unittest tests-debug tests-unittest test-sidecar
 
 ########## sphinx
 sphinx doc html:
