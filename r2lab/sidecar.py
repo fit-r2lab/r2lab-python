@@ -5,9 +5,11 @@ The R2lab sidecar is a websocket service that runs on
 ``wss://r2lab.inria.fr:999/`` and that exposes the status of the testbed.
 
 This module implements client classes, for interacting with the sidecar service.
-The core of the implementation is asynchronous and ``asyncio``-friendly, but for
+
+The core of the implementation is ``asyncio``-friendly and accessible
+through the :class:`~r2lab.sidecar.SidecarAsyncClient` class, but for
 convenience some features are also available to synchronous code through
-wrappers.
+the :class:`~r2lab.sidecar.SidecarSyncClient` class.
 """
 
 # pylint: disable=w1203
@@ -202,17 +204,41 @@ class SidecarAsyncClient(websockets.connect):
     This class behaves as an asynchronous context manager for
     talking with the R2lab sidecar server.
 
+    Optional arguments `args` and `kwds` are passed as-is to
+    `websockets.client.connect`, see
+    https://websockets.readthedocs.io/en/stable/api.html#websockets.client.connect
+
     Example:
         Set a node as available from some asynchronous code::
 
-            async with SidecarSyncClient(url) as sidecar:
+            async with SidecarSyncClient() as sidecar:
                 await sidecar.set_node_attribute(1, 'available', 'ok')
 
         In this example, the ``sidecar`` object is
         a :class:`~r2lab.sidecar.SidecarProtocol` instance.
+
+    Note:
+        **About SSL server certificate verification:**
+        Verifying server certificates relies on a set of "trusted" CAs.
+        Web browsers do come with a maintained set of such trust anchors,
+        however the standard Python installation has no such knowledge;
+        and for that reason attempting to check for the testbed's certificate
+        will fail unless you've taken the time to somehow configure all this.
+
+        If you just want to probe the testbed though, this looks like a lot
+        of hassle. In that case you can turn off server verification as foolows::
+
+            import ssl
+            ssl_context = ssl.SSLContext()
+            # this is where we ask for no verification
+            ssl_context.verify_mode = ssl.CERT_NONE
+            async with SidecarSyncClient(ssl=ssl_context) as sidecar:
+                await sidecar.set_node_attribute(1, 'available', 'ok')
+
+
     """
 
-    def __init__(self, url, *args, **kwds):
+    def __init__(self, url=default_sidecar_url, *args, **kwds):
         if 'create_protocol' in kwds:
             logging.error("should not overwrite create_protocol")
         super().__init__(url, create_protocol=SidecarProtocol,
@@ -231,7 +257,7 @@ class SidecarSyncClient:
     Example:
         Set a node as available from some synchronous code::
 
-            with SidecarSyncClient(url) as sidecar:
+            with SidecarSyncClient() as sidecar:
                 sidecar.set_node_attribute(1, 'available', 'ok')
 
     .. warning::
@@ -241,7 +267,7 @@ class SidecarSyncClient:
       in this use case.
     """
 
-    def __init__(self, url, *args, **kwds):
+    def __init__(self, url=default_sidecar_url, *args, **kwds):
         self.aclient = SidecarAsyncClient(url, *args, **kwds)
         self.proto = None
 
