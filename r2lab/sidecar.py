@@ -211,7 +211,7 @@ class SidecarAsyncClient(websockets.connect):
     Example:
         Set a node as available from some asynchronous code::
 
-            async with SidecarSyncClient() as sidecar:
+            async with SidecarAsyncClient() as sidecar:
                 await sidecar.set_node_attribute(1, 'available', 'ok')
 
         In this example, the ``sidecar`` object is
