@@ -1,5 +1,9 @@
 # ChangeLog
 
+## 0.5.5 - 2019 Jul 10
+
+* also define setup_requires
+
 ## 0.5.4 - 2019 Jul 10
 
 * add explicit install dependency to asynciojobs
