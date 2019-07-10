@@ -39,6 +39,7 @@ setuptools.setup(
     license="CC BY-SA 4.0",
     url="http://r2lab.readthedocs.io",
     packages=['r2lab'],
+    setup_requires=REQUIRED_MODULES,
     install_requires=REQUIRED_MODULES,
     extras_require=EXTRAS_REQUIRE,
     classifiers=[
