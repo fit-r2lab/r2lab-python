@@ -1,5 +1,9 @@
 # ChangeLog
 
+## 0.5.4 - 2019 Jul 10
+
+* add explicit install dependency to asynciojobs
+
 ## 0.5.3 - 2019 Feb 20
 
 * Sidecar classes: url now optional; plus, doc on how to turn off SSL certificate verification
