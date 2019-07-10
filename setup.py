@@ -12,6 +12,7 @@ LONG_DESCRIPTION = "See README at https://github.com/fit-r2lab/r2lab-python/blob
 
 REQUIRED_MODULES = [
     'websockets',
+    'asynciojobs', 
     'apssh',
 ]
 
