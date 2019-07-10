@@ -2,11 +2,24 @@
 
 # pylint: disable=c0111
 
+"""
+Packaging and installation for the r2lab package
+"""
+
+from pathlib import Path
+
 import setuptools
 
-# don't try to import the r2lab package at this early point
-# as this would require asyncssh which might not be installed yet
-from r2lab.version import __version__
+# https://packaging.python.org/guides/single-sourcing-package-version/
+# set __version__ by read & exec of the python code
+# this is better than an import that would otherwise try to
+# import the whole package, and fail if a required module is not yet there
+VERSION_FILE = Path(__file__).parent / "r2lab" / "version.py"
+ENV = {}
+with VERSION_FILE.open() as f:
+    exec(f.read(), ENV)                                 # pylint: disable=w0122
+__version__ = ENV['__version__']
+
 
 LONG_DESCRIPTION = "See README at https://github.com/fit-r2lab/r2lab-python/blob/master/README.md"
 
@@ -39,7 +52,6 @@ setuptools.setup(
     license="CC BY-SA 4.0",
     url="http://r2lab.readthedocs.io",
     packages=['r2lab'],
-    setup_requires=REQUIRED_MODULES,
     install_requires=REQUIRED_MODULES,
     extras_require=EXTRAS_REQUIRE,
     classifiers=[
