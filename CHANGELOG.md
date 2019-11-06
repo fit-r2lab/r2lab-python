@@ -1,5 +1,9 @@
 # ChangeLog
 
+## 0.5.7 - 2019 Nov 06
+
+* add newly supported b205 usrp type
+
 ## 0.5.6 - 2019 Jul 10
 
 * fix packaging; install_requires could not be honored
