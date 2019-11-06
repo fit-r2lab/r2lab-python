@@ -14,7 +14,7 @@ SUPPORTED = {
     'nodes': {
         '__range__': range(1, 38),
         'available': ("on", "off"),
-        'usrp_type': ("none", "b210", "n210", "usrp1", "usrp2",
+        'usrp_type': ("none", "b205", "b210", "n210", "usrp1", "usrp2",
                       "limesdr", "LEAT LoRa", "e3372"),
         # this is meaningful for b210 nodes only
         'usrp_duplexer': ("for UE", "for eNB", "none"),
