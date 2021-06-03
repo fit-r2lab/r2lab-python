@@ -18,6 +18,8 @@ import logging
 
 import asyncio
 import websockets
+# required with websockets v9.x
+import websockets.client
 
 from .sidecar_payload import SidecarPayload as Payload
 
