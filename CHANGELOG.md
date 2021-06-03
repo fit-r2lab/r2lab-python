@@ -1,5 +1,9 @@
 # ChangeLog
 
+## 0.6.0 - 2021 Jun 03
+
+* patch to cope with a change in websockets-9.x
+
 ## 0.5.7 - 2019 Nov 06
 
 * add newly supported b205 usrp type
