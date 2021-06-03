@@ -1,5 +1,9 @@
 # ChangeLog
 
+## 0.6.1 - 2021 Jun 03
+
+* attempt to fix pypi publishing code
+
 ## 0.6.0 - 2021 Jun 03
 
 * patch to cope with a change in websockets-9.x
