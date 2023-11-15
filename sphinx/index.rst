@@ -11,16 +11,16 @@ Contents:
 .. toctree::
    :maxdepth: 3
 
-   README 
-   API 
+   README
+   API
 
 History:
 
 .. toctree::
    :maxdepth: 1
 
-   CHANGELOG  
- 
+   CHANGELOG
+
 Indices and tables
 ==================
 
