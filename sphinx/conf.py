@@ -40,7 +40,8 @@ from r2lab.version import __version__ as r2lab_version
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.viewcode',
-    'sphinxcontrib.asyncio',
+    # deprecated
+    # 'sphinxcontrib.asyncio',
     'sphinx.ext.napoleon',
     'sphinx_autodoc_typehints',
 ]
