@@ -3,5 +3,4 @@ apssh
 pandas
 sphinx-autodoc-typehints
 sphinxcontrib-napoleon
-sphinxcontrib-asyncio
 recommonmark
