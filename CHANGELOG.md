@@ -1,5 +1,10 @@
 # ChangeLog
 
+## 0.6.2 - 2023 Nov 15
+
+* no change in the library
+* update readthedocs config so the doc builds fine again
+
 ## 0.6.1 - 2021 Jun 03
 
 * attempt to fix pypi publishing code
@@ -24,7 +29,7 @@
 ## 0.5.2 - 2019 Feb 1
 
 * fix import prepare that unintentionnally was calling trying to locate faraday.sh and r2labutils.sh
-* available.py knows how to use default loose SSL policy when connecting to a wss:// 
+* available.py knows how to use default loose SSL policy when connecting to a wss://
 * 0.5.1 had bugs wrt incremental broadcasts, and about using 'nodes' even with phones
 
 ## 0.5.0 - 2019 Jan 25
