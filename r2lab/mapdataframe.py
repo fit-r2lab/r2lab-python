@@ -38,7 +38,7 @@ class MapDataFrame(DataFrame):
                            index=r2labmap.indexes(),
                            columns=all_columns)
         for node_id, (gridx, gridy) in r2labmap.iterate_nodes():
-            self.loc[node_id]['x'] = gridx
-            self.loc[node_id]['y'] = gridy
+            self.loc[node_id, 'x'] = gridx
+            self.loc[node_id, 'y'] = gridy
             for column, value in columns.items():
-                self.loc[node_id][column] = value
+                self.loc[node_id, column] = value
