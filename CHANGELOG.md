@@ -1,5 +1,9 @@
 # ChangeLog
 
+## 0.7.0 - 2024 Sep 4
+
+* proper use of .loc without chaining in the dataframe for pandas 3
+
 ## 0.6.2 - 2023 Nov 15
 
 * no change in the library
