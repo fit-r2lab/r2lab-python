@@ -19,7 +19,7 @@ import logging
 import asyncio
 import websockets
 # required with websockets v9.x
-import websockets.client
+import websockets.client as ws_client
 
 from .sidecar_payload import SidecarPayload as Payload
 
@@ -47,7 +47,7 @@ def _websockets_logging_to_stdout(level):
 # the proxy variable actually points at the underlying protocol
 # so that's where to add our send / receive methods
 
-class SidecarProtocol(websockets.client.WebSocketClientProtocol):
+class SidecarProtocol(ws_client.WebSocketClientProtocol):
 
     """
     The SidecarProtocol class is an asyncio-compliant implementation

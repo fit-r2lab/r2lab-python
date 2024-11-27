@@ -26,6 +26,8 @@ def not_status(ok_ko):
 
 def co_run(coro):
     return asyncio.get_event_loop().run_until_complete(coro)
+    # if I do this I transform 1 warning into 3 errors !
+    # return asyncio.run(coro)
 
 class Tests(TestCase):
 
