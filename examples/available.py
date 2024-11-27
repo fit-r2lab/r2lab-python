@@ -16,7 +16,7 @@ from argparse import ArgumentParser
 from r2lab import SidecarSyncClient
 
 # globals
-default_sidecar_url = "wss://r2lab.inria.fr:999/"
+default_sidecar_url = "wss://r2lab-sidecar.inria.fr:443/"
 devel_sidecar_url = "ws://localhost:10000/"
 
 # parse args

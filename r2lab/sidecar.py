@@ -2,7 +2,7 @@
 
 """
 The R2lab sidecar is a websocket service that runs on
-``wss://r2lab.inria.fr:999/`` and that exposes the status of the testbed.
+``wss://r2lab-sidecar.inria.fr:443/`` and that exposes the status of the testbed.
 
 This module implements client classes, for interacting with the sidecar service.
 
@@ -24,7 +24,7 @@ import websockets.client
 from .sidecar_payload import SidecarPayload as Payload
 
 
-default_sidecar_url = 'wss://r2lab.inria.fr:999/'
+default_sidecar_url = 'wss://r2lab-sidecar.inria.fr:443/'
 
 # provide a simpler way to turn on debugging
 logging.basicConfig(level=logging.INFO)

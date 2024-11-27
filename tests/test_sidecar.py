@@ -17,7 +17,9 @@ from r2lab import SidecarAsyncClient, SidecarSyncClient
 # it needs the logging config file mentioned here
 
 LOCAL_SERVER = "ws://localhost:10000/"
-PROD_SERVER = "wss://r2lab.inria.fr:999/"
+PROD_SERVER = "wss://r2lab-sidecar.inria.fr:443/"
+
+TEST_SERVER = PROD_SERVER
 
 def not_status(ok_ko):
     return "".join(reversed(ok_ko))
@@ -30,7 +32,7 @@ class Tests(TestCase):
 
     async def co_ping(self):
 
-        async with SidecarAsyncClient(LOCAL_SERVER) as sidecar:
+        async with SidecarAsyncClient(TEST_SERVER) as sidecar:
             nodes = await sidecar.nodes_status()
         self.assertIn(nodes[1]['available'], {'ok', 'ko'})
 
@@ -43,13 +45,13 @@ class Tests(TestCase):
     async def co_nodes(self):
 
         # one connection, one message
-        async with SidecarAsyncClient(LOCAL_SERVER) as sidecar:
+        async with SidecarAsyncClient(TEST_SERVER) as sidecar:
             await sidecar.set_node_attribute(1, 'available', 'ok')
 
         await asyncio.sleep(self.DELAY)
         # reopen the connexion
         # one connection, several messages
-        async with SidecarAsyncClient(LOCAL_SERVER) as sidecar:
+        async with SidecarAsyncClient(TEST_SERVER) as sidecar:
             await sidecar.set_node_attribute(1, 'available', 'ko')
             await asyncio.sleep(self.DELAY)
             await sidecar.set_node_attribute(1, 'available', 'ok')
@@ -58,7 +60,7 @@ class Tests(TestCase):
 
         await asyncio.sleep(self.DELAY)
         # set attribute and check consistency
-        async with SidecarAsyncClient(LOCAL_SERVER) as sidecar:
+        async with SidecarAsyncClient(TEST_SERVER) as sidecar:
             await sidecar.set_node_attribute(1, 'available', 'ok')
             nodes = await sidecar.nodes_status()
 #            print("First fetch (expect available=ok) {}".format(nodes[1]))
@@ -66,7 +68,7 @@ class Tests(TestCase):
 
         await asyncio.sleep(self.DELAY)
         # a little more complex
-        async with SidecarAsyncClient(LOCAL_SERVER) as sidecar:
+        async with SidecarAsyncClient(TEST_SERVER) as sidecar:
             await sidecar.set_node_attribute('1', 'available', 'ko')
             await sidecar.set_node_attribute('2', 'available', 'ok')
             nodes = await sidecar.nodes_status()
@@ -80,7 +82,7 @@ class Tests(TestCase):
 
 
     async def co_phones(self):
-        async with SidecarAsyncClient(LOCAL_SERVER) as sidecar:
+        async with SidecarAsyncClient(TEST_SERVER) as sidecar:
             await sidecar.set_phone_attribute(1, 'airplane_mode', 'on')
             phones = await sidecar.phones_status()
             print("First fetch (expect airplane_mode=on) {}".format(phones[1]))
@@ -89,7 +91,7 @@ class Tests(TestCase):
         await asyncio.sleep(self.DELAY)
         # reopen the connexion
         # this is safer because otherwise we may get an older result
-        async with SidecarAsyncClient(LOCAL_SERVER) as sidecar:
+        async with SidecarAsyncClient(TEST_SERVER) as sidecar:
             await sidecar.set_phones_triples(
                 ('1', 'airplane_mode', 'off'),
                 ('2', 'airplane_mode', 'on')
@@ -109,7 +111,7 @@ class Tests(TestCase):
     ### sync client - lighter tests as it relies on the async code
 
     def test_ping_iter(self):
-        client = SidecarSyncClient(LOCAL_SERVER)
+        client = SidecarSyncClient(TEST_SERVER)
         client.connect()
         nodes = client.nodes_status()
         self.assertIn(nodes[1]['available'], {'ok', 'ko'})
@@ -117,13 +119,13 @@ class Tests(TestCase):
 
 
     def test_ping_with(self):
-        with SidecarSyncClient(LOCAL_SERVER) as client:
+        with SidecarSyncClient(TEST_SERVER) as client:
             nodes = client.nodes_status()
         self.assertIn(nodes[1]['available'], {'ok', 'ko'})
 
 
     def test_nodes(self):
-        client = SidecarSyncClient(LOCAL_SERVER)
+        client = SidecarSyncClient(TEST_SERVER)
         client.connect()
         nodes = client.nodes_status()
         start = nodes[1]['available']

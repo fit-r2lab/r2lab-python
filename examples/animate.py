@@ -14,7 +14,7 @@ default_cycle = 1
 default_runs = 0
 
 # should maybe default to this official one, but mostly it's firewalled
-# default_sidecar_url = "https://r2lab.inria.fr:999/"
+# default_sidecar_url = "https://r2lab-sidecar.inria.fr:443/"
 default_sidecar_url = "ws://localhost:10000/"
 
 node_ids = range(1, 38)
