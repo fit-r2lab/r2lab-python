@@ -15,8 +15,8 @@ the :class:`~r2lab.sidecar.SidecarSyncClient` class.
 # pylint: disable=w1203
 
 import logging
-
 import asyncio
+
 # support for ws>=14 only
 import websockets
 import websockets.asyncio.client as ws_client
@@ -42,20 +42,14 @@ def _websockets_logging_to_stdout(level):
     return logger
 
 
-# when doing
-# async with AsyncSidecarProxy(url) as proxy:
-# the proxy variable actually points at the underlying protocol
-# so that's where to add our send / receive methods
-
 class SidecarConnection(ws_client.ClientConnection):
 
     """
-    The SidecarProtocol class is an asyncio-compliant implementation
+    The SidecarClient class is an asyncio-compliant implementation
     of the R2lab sidecar system.
 
-    It inherits ``websockets.client.WebSocketClientProtocol``
-    as documented here:
-    https://websockets.readthedocs.io/en/stable/api.html#module-websockets.client
+    It inherits ``websockets.client.WebSocketClientConnection``
+    from websockets 14
     """
 
     async def send_payload(self, payload):
@@ -208,7 +202,7 @@ class SidecarAsyncClient(websockets.connect):
 
     Optional arguments `args` and `kwds` are passed as-is to
     `websockets.client.connect`, see
-    https://websockets.readthedocs.io/en/stable/api.html#websockets.client.connect
+    https://websockets.readthedocs.io/en/stable/reference/asyncio/client.html#opening-a-connection
 
     Example:
         Set a node as available from some asynchronous code::
@@ -217,7 +211,7 @@ class SidecarAsyncClient(websockets.connect):
                 await sidecar.set_node_attribute(1, 'available', 'ok')
 
         In this example, the ``sidecar`` object is
-        a :class:`~r2lab.sidecar.SidecarProtocol` instance.
+        a :class:`~r2lab.sidecar.SidecarConnection` instance.
 
     Note:
         **About SSL server certificate verification:**
@@ -271,24 +265,25 @@ class SidecarSyncClient:
 
     def __init__(self, url=default_sidecar_url, *args, **kwds):
         self.aclient = SidecarAsyncClient(url, *args, **kwds)
-        self.proto = None
+        self.runner = asyncio.Runner()
+        self.connection = None
 
     def connect(self):
-        if self.proto:
+        if self.connection:
             logging.warning("SyncClient already connected")
         async def coro():
-            self.proto = await self.aclient
-        asyncio.get_event_loop().run_until_complete(coro())
+            self.connection = await self.aclient
+        self.runner.run(coro())
 
     def close(self):
-        if not self.proto:
+        if not self.connection:
             logging.warning("SyncClient not connected")
         else:
             async def coro():
-                await self.proto.close()
-                self.proto = None
-            asyncio.get_event_loop().run_until_complete(coro())
-
+                await self.connection.close()
+                self.connection = None
+            self.runner.run(coro())
+            self.runner.close()
 
     # of course we can't inherit from the async class as-is
     # so let's wrap the async methods
@@ -298,8 +293,8 @@ class SidecarSyncClient:
             raise AttributeError(f"no such method {method} in SidecarConnection")
         def wrapper(*args, **kwds):
             async def coro():
-                return await getattr(self.proto, method)(*args, **kwds)
-            return asyncio.get_event_loop().run_until_complete(coro())
+                return await getattr(self.connection, method)(*args, **kwds)
+            return self.runner.run(coro())
         return wrapper
 
     def __enter__(self):
