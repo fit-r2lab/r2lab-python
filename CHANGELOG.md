@@ -1,5 +1,11 @@
 # ChangeLog
 
+## 0.9.0 - 2024 Nov 28
+
+* support for (only) websockets>=14
+* no longer uses soon-to-be-deprecated get_event_loop() in asyncio
+* global symbol DEFAULT_SIDECAR_URL was forlerly lowercase
+
 ## 0.8.0 - 2024 Nov 28
 
 * use pyproject.toml instead of setup.py
@@ -48,14 +54,17 @@
 * incorporate animate.py, a sidecar client formerly in the sidecar repo
 
 ## 0.2.4 - 2018 Dec 17
+
 * find_local_embedded_script has more heuristics
 * find_local_embedded_script raises FileNotFoundError in case of failure
 
 ## 0.2.3 - 2018 Nov 20
+
 * prepare_testbed_scheduler should be OK, at least it runs inside the mosaic demo
 * 0.2.2 and 0.2.1 were **broken**
 
 ## 0.2.1 - 2018 Nov 14
+
 * new function prepare_testbed_scheduler
 
 ## 0.2.0 - 2018 Nov 13

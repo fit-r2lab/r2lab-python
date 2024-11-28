@@ -1,6 +1,6 @@
 [project]
 name = "r2lab"
-version = "0.8.0"
+version = "0.9.0"
 description = "Basic utilities for the R2lab testbed"
 license="CC-BY-NC-4.0"
 readme = "README.md"
