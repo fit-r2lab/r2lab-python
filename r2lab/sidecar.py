@@ -12,7 +12,7 @@ convenience some features are also available to synchronous code through
 the :class:`~r2lab.sidecar.SidecarSyncClient` class.
 """
 
-# pylint: disable=w1203
+# pylint: disable=keyword-arg-before-vararg, logging-fstring-interpolation
 
 import logging
 import asyncio
@@ -24,7 +24,7 @@ import websockets.asyncio.client as ws_client
 from .sidecar_payload import SidecarPayload as Payload
 
 
-default_sidecar_url = 'wss://r2lab-sidecar.inria.fr:443/'
+DEFAULT_SIDECAR_URL = 'wss://r2lab-sidecar.inria.fr:443/'
 
 # provide a simpler way to turn on debugging
 logging.basicConfig(level=logging.INFO)
@@ -70,9 +70,8 @@ class SidecarConnection(ws_client.ClientConnection):
     # for historical reasons, if 'incremental' is not present
     # then its a full info message
     @staticmethod
-    def is_not_incremental(umbrella):
-        return ('incremental' not in umbrella
-                or not umbrella['incremental'])
+    def _is_incremental(umbrella):
+        return umbrella.get('incremental', None)
 
     async def send_umbrella(self, category, action, message):
         """
@@ -103,7 +102,7 @@ class SidecarConnection(ws_client.ClientConnection):
             logging.debug(f"receives answer={umbrella}")
             if (umbrella['category'] == category
                     and umbrella['action'] == 'info'
-                    and self.is_not_incremental(umbrella)):
+                    and not self._is_incremental(umbrella)):
                 infos = umbrella['message']
                 info_by_id = {info['id']: info for info in infos}
                 return info_by_id
@@ -155,7 +154,7 @@ class SidecarConnection(ws_client.ClientConnection):
         """
         return await self._set_triples('nodes', triples)
 
-    async def set_node_attribute(self, id, attribute, value):
+    async def set_node_attribute(self, id_, attribute, value):
         """
         Parameters:
             id: a node_id as an int or str
@@ -167,7 +166,7 @@ class SidecarConnection(ws_client.ClientConnection):
 
                 await sidecar.set_node_attribute(1, 'available', 'ko')
         """
-        return await self.set_nodes_triples((id, attribute, value))
+        return await self.set_nodes_triples((id_, attribute, value))
 
 
     # phones
@@ -180,7 +179,7 @@ class SidecarConnection(ws_client.ClientConnection):
         "Identical to ``set_nodes_triples`` but on phones"
         return await self._set_triples('phones', triples)
 
-    async def set_phone_attribute(self, id, attribute, value):
+    async def set_phone_attribute(self, id_, attribute, value):
         """
         Similar to ``set_node_attribute`` on a phone
 
@@ -190,7 +189,7 @@ class SidecarConnection(ws_client.ClientConnection):
 
                 await sidecar.set_phone_attribute(2, 'airplane_mode', 'on')
         """
-        return await self.set_phones_triples((id, attribute, value))
+        return await self.set_phones_triples((id_, attribute, value))
 
 
 
@@ -234,7 +233,7 @@ class SidecarAsyncClient(websockets.connect):
 
     """
 
-    def __init__(self, url=default_sidecar_url, *args, **kwds):
+    def __init__(self, url=DEFAULT_SIDECAR_URL, *args, **kwds):
         if 'create_connection' in kwds:
             logging.error("should not overwrite create_connection")
         super().__init__(url, create_connection=SidecarConnection,
@@ -263,12 +262,15 @@ class SidecarSyncClient:
       in this use case.
     """
 
-    def __init__(self, url=default_sidecar_url, *args, **kwds):
+    def __init__(self, url=DEFAULT_SIDECAR_URL, *args, **kwds):
         self.aclient = SidecarAsyncClient(url, *args, **kwds)
         self.runner = asyncio.Runner()
         self.connection = None
 
     def connect(self):
+        """
+        Connect to the sidecar server
+        """
         if self.connection:
             logging.warning("SyncClient already connected")
         async def coro():
@@ -276,6 +278,9 @@ class SidecarSyncClient:
         self.runner.run(coro())
 
     def close(self):
+        """
+        Close the connection to the sidecar server
+        """
         if not self.connection:
             logging.warning("SyncClient not connected")
         else:

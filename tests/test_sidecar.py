@@ -1,15 +1,16 @@
-# pylint: disable=w1203
+# pylint: disable=missing-docstring
 
-# requirements to run this part:
-# a running local sidecar server (sidecar.py)
-
+"""
+uses the production server by default
+tweak TEST_SERVER to use a local server if you so have one
+"""
 
 from unittest import TestCase
 
 import asyncio
-import websockets
-import json
-import logging
+# import websockets
+# import json
+# import logging
 
 from r2lab import SidecarAsyncClient, SidecarSyncClient
 
@@ -91,7 +92,7 @@ class Tests(TestCase):
         async with SidecarAsyncClient(TEST_SERVER) as sidecar:
             await sidecar.set_phone_attribute(1, 'airplane_mode', 'on')
             phones = await sidecar.phones_status()
-            print("First fetch (expect airplane_mode=on) {}".format(phones[1]))
+            print(f"First fetch (expect airplane_mode=on) {phones[1]}")
             self.assertEqual(phones[1]['airplane_mode'], 'on')
 
         await asyncio.sleep(self.DELAY)
@@ -104,10 +105,10 @@ class Tests(TestCase):
             )
             phones = await sidecar.phones_status()
             print(
-                "Second fetch on phone 1 (expect airplane_mode=off) {}".format(phones[1]))
+                f"Second fetch on phone 1 (expect airplane_mode=off) {phones[1]}")
             self.assertEqual(phones[1]['airplane_mode'], 'off')
             print(
-                "Second fetch on phone 2 (expect airplane_mode=on) {}".format(phones[2]))
+                f"Second fetch on phone 2 (expect airplane_mode=on) {phones[2]}")
             self.assertEqual(phones[2]['airplane_mode'], 'on')
 
     def test_async_phones(self):
