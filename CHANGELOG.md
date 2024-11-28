@@ -1,5 +1,10 @@
 # ChangeLog
 
+## 0.8.0 - 2024 Nov 28
+
+* use pyproject.toml instead of setup.py
+* specify websockets<14 as this new release requires changes in the code
+
 ## 0.7.0 - 2024 Sep 4
 
 * proper use of .loc without chaining in the dataframe for pandas 3
