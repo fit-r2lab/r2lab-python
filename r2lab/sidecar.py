@@ -17,9 +17,9 @@ the :class:`~r2lab.sidecar.SidecarSyncClient` class.
 import logging
 
 import asyncio
+# support for ws>=14 only
 import websockets
-# required with websockets v9.x
-import websockets.client as ws_client
+import websockets.asyncio.client as ws_client
 
 from .sidecar_payload import SidecarPayload as Payload
 
@@ -47,7 +47,7 @@ def _websockets_logging_to_stdout(level):
 # the proxy variable actually points at the underlying protocol
 # so that's where to add our send / receive methods
 
-class SidecarProtocol(ws_client.WebSocketClientProtocol):
+class SidecarConnection(ws_client.ClientConnection):
 
     """
     The SidecarProtocol class is an asyncio-compliant implementation
@@ -241,9 +241,9 @@ class SidecarAsyncClient(websockets.connect):
     """
 
     def __init__(self, url=default_sidecar_url, *args, **kwds):
-        if 'create_protocol' in kwds:
-            logging.error("should not overwrite create_protocol")
-        super().__init__(url, create_protocol=SidecarProtocol,
+        if 'create_connection' in kwds:
+            logging.error("should not overwrite create_connection")
+        super().__init__(url, create_connection=SidecarConnection,
                          *args, **kwds)
 
 
@@ -294,8 +294,8 @@ class SidecarSyncClient:
     # so let's wrap the async methods
     def __getattr__(self, method):
         #print(f"SyncClient resolving method {method}")
-        if method not in dir(SidecarProtocol):
-            raise AttributeError(f"no such method {method} in SidecarProtocol")
+        if method not in dir(SidecarConnection):
+            raise AttributeError(f"no such method {method} in SidecarConnection")
         def wrapper(*args, **kwds):
             async def coro():
                 return await getattr(self.proto, method)(*args, **kwds)
