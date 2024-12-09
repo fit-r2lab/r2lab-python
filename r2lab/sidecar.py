@@ -26,8 +26,7 @@ from .sidecar_payload import SidecarPayload as Payload
 
 DEFAULT_SIDECAR_URL = 'wss://r2lab-sidecar.inria.fr:443/'
 
-# provide a simpler way to turn on debugging
-logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger('r2lab-sidecar')
 
 
 
@@ -88,7 +87,7 @@ class SidecarConnection(ws_client.ClientConnection):
         await self.send_umbrella(category, 'request', "PLEASE")
         while True:
             umbrella = await self.recv_umbrella()
-            logging.debug(f"receives answer={umbrella}")
+            logger.debug(f"receives answer={umbrella}")
             if (umbrella['category'] == category
                     and umbrella['action'] == 'info'
                     and not self._is_incremental(umbrella)):
@@ -261,7 +260,7 @@ class SidecarSyncClient:
         Connect to the sidecar server
         """
         if self.connection:
-            logging.warning("SyncClient already connected")
+            logger.warning("SyncClient already connected")
         async def coro():
             self.connection = await self.aclient
         self.runner.run(coro())
@@ -271,7 +270,7 @@ class SidecarSyncClient:
         Close the connection to the sidecar server
         """
         if not self.connection:
-            logging.warning("SyncClient not connected")
+            logger.warning("SyncClient not connected")
         else:
             async def coro():
                 await self.connection.close()
