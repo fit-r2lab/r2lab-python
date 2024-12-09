@@ -1,5 +1,15 @@
 # ChangeLog
 
+## 0.10.0 - 2024 Dec 6
+
+* after an intense one-week bug chasing that eventually pointed to
+  websockets new asyncio implementation
+  so basically this reverts to using the legacy websockets client 
+  implementation
+  see https://github.com/python-websockets/websockets/issues/1563
+  for a follow-up
+* logging tweaked a bit in the mix
+
 ## 0.9.0 - 2024 Nov 28
 
 * support for (only) websockets>=14
