@@ -29,17 +29,6 @@ DEFAULT_SIDECAR_URL = 'wss://r2lab-sidecar.inria.fr:443/'
 # provide a simpler way to turn on debugging
 logging.basicConfig(level=logging.INFO)
 
-def _websockets_logging_to_stdout(level):
-    logger = logging.getLogger('sidecar')
-    logger.setLevel(level)
-    channel = logging.StreamHandler()
-    channel.setLevel(level)
-    formatter = logging.Formatter(
-        "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        datefmt="%m-%d %H:%M:%S")
-    channel.setFormatter(formatter)
-    logger.addHandler(channel)
-    return logger
 
 
 class SidecarConnection(ws_client.ClientConnection):
