@@ -18,8 +18,6 @@ import logging
 import asyncio
 
 # support for ws>=14 only
-import websockets
-import websockets.asyncio.client as ws_client
 
 from .sidecar_payload import SidecarPayload as Payload
 
@@ -30,14 +28,9 @@ logger = logging.getLogger('r2lab-sidecar')
 
 
 
-class SidecarConnection(ws_client.ClientConnection):
-
     """
     The SidecarClient class is an asyncio-compliant implementation
     of the R2lab sidecar system.
-
-    It inherits ``websockets.client.WebSocketClientConnection``
-    from websockets 14
     """
 
     async def send_payload(self, payload):
@@ -181,14 +174,12 @@ class SidecarConnection(ws_client.ClientConnection):
 
 
 
-class SidecarAsyncClient(websockets.connect):
 
     """
     This class behaves as an asynchronous context manager for
     talking with the R2lab sidecar server.
 
-    Optional arguments `args` and `kwds` are passed as-is to
-    `websockets.client.connect`, see
+    Optional arguments `args` and `kwds` are passed as-is to the superclass, see
     https://websockets.readthedocs.io/en/stable/reference/asyncio/client.html#opening-a-connection
 
     Example:
