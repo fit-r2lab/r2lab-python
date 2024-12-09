@@ -17,18 +17,22 @@ else
     DEST=preplab.pl.sophia.inria.fr
 endif
 
-# installing in /tmp/r2lab-sync for testing
-sync:
-	@echo 'export PYTHONPATH=/tmp/r2lab-sync'
-	rsync -av --relative $$(git ls-files) root@$(DEST):/tmp/r2lab-sync/
+TMPDIR=/tmp/r2lab-dev-r2lab
 
-faraday:
+# installing in $(TMPDIR) for testing
+sync:
+	@echo '===== '
+	rsync -ai --relative $$(git ls-files) root@$(DEST):$(TMPDIR)/
+	@echo '===== once copied, do the following as root on $(DEST)'
+	@echo 'conda activate r2lab-dev-xxx && pip install -e $(TMPDIR)'
+
+r2lab:
 	$(MAKE) sync deployment=production
 
 preplab:
 	$(MAKE) sync deployment=preplab
 
-.PHONY: sync faraday preplab
+.PHONY: sync r2lab preplab
 
 ##############################
 tests: tests-unittest
