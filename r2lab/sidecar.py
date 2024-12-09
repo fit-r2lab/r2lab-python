@@ -18,6 +18,8 @@ import logging
 import asyncio
 
 # support for ws>=14 only
+# import websockets.asyncio.client
+import websockets.legacy.client
 
 from .sidecar_payload import SidecarPayload as Payload
 
@@ -27,6 +29,8 @@ DEFAULT_SIDECAR_URL = 'wss://r2lab-sidecar.inria.fr:443/'
 logger = logging.getLogger('r2lab-sidecar')
 
 
+# class SidecarConnection(websockets.asyncio.client.ClientConnection):
+class SidecarConnection(websockets.legacy.client.WebSocketClientProtocol):
 
     """
     The SidecarClient class is an asyncio-compliant implementation
@@ -179,6 +183,8 @@ logger = logging.getLogger('r2lab-sidecar')
         return retcod
 
 
+# class SidecarAsyncClient(websockets.asyncio.client.connect):
+class SidecarAsyncClient(websockets.legacy.client.connect):
 
     """
     This class behaves as an asynchronous context manager for
@@ -218,9 +224,10 @@ logger = logging.getLogger('r2lab-sidecar')
     """
 
     def __init__(self, url=DEFAULT_SIDECAR_URL, *args, **kwds):
-        if 'create_connection' in kwds:
-            logging.error("should not overwrite create_connection")
-        super().__init__(url, create_connection=SidecarConnection,
+        if 'create_protocol' in kwds:
+            logger.error("should not overwrite create_protocol")
+        logger.debug(f"SidecarAsyncClient constructor -> {url}")
+        super().__init__(url, create_protocol=SidecarConnection,
                          *args, **kwds)
 
 
