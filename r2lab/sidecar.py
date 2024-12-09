@@ -172,6 +172,11 @@ logger = logging.getLogger('r2lab-sidecar')
         """
         return await self.set_phones_triples((id_, attribute, value))
 
+    async def send(self, *args, **kwds):
+        logger.debug(f"SidecarConnection.send {args} {kwds}")
+        retcod = await super().send(*args, **kwds)
+        logger.debug(f"SidecarConnection.send returns {retcod}")
+        return retcod
 
 
 
