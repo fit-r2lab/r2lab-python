@@ -69,3 +69,11 @@ pep8:
 	git ls-files | grep '\.py$$' | grep -v '/conf.py$$' | xargs pep8
 
 .PHONY: pep8
+
+########## push on faraday for live testing
+r2lab:
+	rsync -ai --exclude .git --exclude .venv --exclude r2lab/__pycache__ ./ faraday:/tmp/r2lab-dev-r2lab
+	@echo "on faraday"
+	@echo "conda activate r2lab-dev-313"
+	@echo "pip install -e /tmp/r2lab-dev-r2lab"
+
