@@ -1,5 +1,10 @@
 # ChangeLog
 
+## 0.11.0 - 2025 Apr 17
+
+- async client passes the proper loop object to the websocket client
+- fix (un)available.py that was needing a good update
+
 ## 0.10.0 - 2024 Dec 6
 
 * after an intense one-week bug chasing that eventually pointed to
