@@ -16,53 +16,57 @@ from argparse import ArgumentParser
 from r2lab import SidecarSyncClient
 
 # globals
-default_sidecar_url = "wss://r2lab-sidecar.inria.fr:443/"
-devel_sidecar_url = "ws://localhost:10000/"
+DEFAULT_SIDECAR_URL = "wss://r2lab-sidecar.inria.fr:443/"
+DEVEL_SIDECAR_URL = "ws://localhost:10000/"
 
-# parse args
-parser = ArgumentParser()
-parser.add_argument("nodes", nargs='+', type=int)
-parser.add_argument("-u", "--sidecar-url", dest="sidecar_url",
-                    default=default_sidecar_url,
-                    help="url for thesidecar server (default={})"
-                    .format(default_sidecar_url))
-parser.add_argument("-d", "--devel",
-                    default=False, action='store_true')
-# parser.add_argument("-v", "--verbose", default=False, action='store_true')
-args = parser.parse_args()
+def main():
+    # parse args
+    parser = ArgumentParser()
+    parser.add_argument("nodes", nargs='+', type=int)
+    parser.add_argument(
+        "-u", "--sidecar-url", dest="sidecar_url",
+        default=DEFAULT_SIDECAR_URL,
+        help=f"url for thesidecar server (default={DEFAULT_SIDECAR_URL})")
+    parser.add_argument(
+        "-d", "--devel", default=False, action='store_true')
+    parser.add_argument(
+        "-s", "--secure", default=False, action='store_true',
+        help="trigger SSL server verification")
 
-
-# check if run as 'available.py' or 'unavailable.py'
-import sys
-available_value = 'ko' if 'un' in sys.argv[0] else 'ok'
-
-if args.devel:
-    url = devel_sidecar_url
-else:
-    url = args.sidecar_url
+    # parser.add_argument("-v", "--verbose", default=False, action='store_true')
+    args = parser.parse_args()
 
 
-def check_valid(node):
-    return 1 <= node <= 37
+    # check if run as 'available.py' or 'unavailable.py'
+    import sys
+    available_value = 'ko' if 'un' in sys.argv[0] else 'ok'
+
+    if args.devel:
+        url = DEVEL_SIDECAR_URL
+    else:
+        url = args.sidecar_url
 
 
-invalid_nodes = [node for node in args.nodes if not check_valid(node)]
+    def check_valid(node):
+        return 1 <= node <= 37
 
-if invalid_nodes:
-    print("Invalid inputs {} - exiting".format(invalid_nodes))
-    exit(1)
 
-triples = [(node, 'available', available_value) for node in args.nodes]
+    invalid_nodes = [node for node in args.nodes if not check_valid(node)]
 
-import websockets
-secure, *_ = websockets.uri.parse_uri(url)
-kwds = {}
-if secure:
-    import ssl
-    # kwds.update(dict(ssl=ssl.create_default_context()))
-    kwds.update(dict(ssl=ssl.SSLContext()))
+    if invalid_nodes:
+        print(f"Invalid inputs {invalid_nodes} - exiting")
+        exit(1)
 
-print("Connecting to sidecar at {}".format(url))
+    triples = [(node, 'available', available_value) for node in args.nodes]
 
-with SidecarSyncClient(url, **kwds) as sidecar:
-    sidecar.set_nodes_triples(*triples)
+    ssl_kwargs = {}
+    if args.secure:
+        ssl_kwargs['ssl'] = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+
+    print("Connecting to sidecar at {}".format(url))
+
+    with SidecarSyncClient(url, **ssl_kwargs) as sidecar:
+        sidecar.set_nodes_triples(*triples)
+
+if __name__ == "__main__":
+    main()
