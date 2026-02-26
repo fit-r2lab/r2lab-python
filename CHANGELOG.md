@@ -1,5 +1,10 @@
 # ChangeLog
 
+## 0.12.0 - 2026 Feb 26
+
+- new timeout parameter for the SidecarSyncClient, to avoid hanging indefinitely
+  when the sidecar is not responding
+
 ## 0.11.0 - 2025 Apr 17
 
 - async client passes the proper loop object to the websocket client
