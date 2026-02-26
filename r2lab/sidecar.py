@@ -253,9 +253,12 @@ class SidecarSyncClient:
       in this use case.
     """
 
-    def __init__(self, url=DEFAULT_SIDECAR_URL, *args, **kwds):
+    def __init__(self, url=DEFAULT_SIDECAR_URL, *args, timeout=10, **kwds):
         self.runner = asyncio.Runner()
-        self.aclient = SidecarAsyncClient(url, loop=self.runner.get_loop(), *args, **kwds)
+        self.aclient = SidecarAsyncClient(
+            url, loop=self.runner.get_loop(),
+            open_timeout=timeout,
+            *args, **kwds)
         self.connection = None
 
     def connect(self):
