@@ -1,8 +1,13 @@
 # pylint: disable=missing-docstring
 
 """
-uses the production server by default
-tweak TEST_SERVER to use a local server if you so have one
+uses a local server by default, run it with r2lab-sidecar --devel
+these tests write in the sidecar, so tweak TEST_SERVER to use
+the production server only if you really mean it
+
+the attribute that we set on nodes is called TEST_FLAG; the sidecar has
+no opinion on what attributes are, but one that is meaningful (like
+cmc_on_off) would show up in the web interface
 """
 
 from unittest import TestCase
@@ -20,7 +25,9 @@ from r2lab import SidecarAsyncClient, SidecarSyncClient
 LOCAL_SERVER = "ws://localhost:10000/"
 PROD_SERVER = "wss://r2lab-sidecar.inria.fr:443/"
 
-TEST_SERVER = PROD_SERVER
+TEST_SERVER = LOCAL_SERVER
+
+TEST_FLAG = 'test_flag'
 
 def not_status(ok_ko):
     return "".join(reversed(ok_ko))
@@ -41,7 +48,7 @@ class Tests(TestCase):
 
         async with SidecarAsyncClient(TEST_SERVER) as sidecar:
             nodes = await sidecar.nodes_status()
-        self.assertIn(nodes[1]['available'], {'ok', 'ko'})
+        self.assertIsInstance(nodes, dict)
 
     def test_async_ping(self):
         co_run(self.co_ping())
@@ -53,35 +60,35 @@ class Tests(TestCase):
 
         # one connection, one message
         async with SidecarAsyncClient(TEST_SERVER) as sidecar:
-            await sidecar.set_node_attribute(1, 'available', 'ok')
+            await sidecar.set_node_attribute(1, TEST_FLAG, 'ok')
 
         await asyncio.sleep(self.DELAY)
         # reopen the connexion
         # one connection, several messages
         async with SidecarAsyncClient(TEST_SERVER) as sidecar:
-            await sidecar.set_node_attribute(1, 'available', 'ko')
+            await sidecar.set_node_attribute(1, TEST_FLAG, 'ko')
             await asyncio.sleep(self.DELAY)
-            await sidecar.set_node_attribute(1, 'available', 'ok')
+            await sidecar.set_node_attribute(1, TEST_FLAG, 'ok')
             await asyncio.sleep(self.DELAY)
-            await sidecar.set_node_attribute(1, 'available', 'ko')
+            await sidecar.set_node_attribute(1, TEST_FLAG, 'ko')
 
         await asyncio.sleep(self.DELAY)
         # set attribute and check consistency
         async with SidecarAsyncClient(TEST_SERVER) as sidecar:
-            await sidecar.set_node_attribute(1, 'available', 'ok')
+            await sidecar.set_node_attribute(1, TEST_FLAG, 'ok')
             nodes = await sidecar.nodes_status()
-#            print("First fetch (expect available=ok) {}".format(nodes[1]))
-            self.assertEqual(nodes[1]['available'], 'ok')
+#            print("First fetch (expect test_flag=ok) {}".format(nodes[1]))
+            self.assertEqual(nodes[1][TEST_FLAG], 'ok')
 
         await asyncio.sleep(self.DELAY)
         # a little more complex
         async with SidecarAsyncClient(TEST_SERVER) as sidecar:
-            await sidecar.set_node_attribute('1', 'available', 'ko')
-            await sidecar.set_node_attribute('2', 'available', 'ok')
+            await sidecar.set_node_attribute('1', TEST_FLAG, 'ko')
+            await sidecar.set_node_attribute('2', TEST_FLAG, 'ok')
             nodes = await sidecar.nodes_status()
-#            print("Second fetch (expect available=ko) {}".format(nodes[1]))
-            self.assertEqual(nodes[1]['available'], 'ko')
-            self.assertEqual(nodes[2]['available'], 'ok')
+#            print("Second fetch (expect test_flag=ko) {}".format(nodes[1]))
+            self.assertEqual(nodes[1][TEST_FLAG], 'ko')
+            self.assertEqual(nodes[2][TEST_FLAG], 'ok')
 
     def test_async_nodes(self):
         co_run(self.co_nodes())
@@ -121,28 +128,28 @@ class Tests(TestCase):
         client = SidecarSyncClient(TEST_SERVER)
         client.connect()
         nodes = client.nodes_status()
-        self.assertIn(nodes[1]['available'], {'ok', 'ko'})
+        self.assertIsInstance(nodes, dict)
         client.close()
 
 
     def test_ping_with(self):
         with SidecarSyncClient(TEST_SERVER) as client:
             nodes = client.nodes_status()
-        self.assertIn(nodes[1]['available'], {'ok', 'ko'})
+        self.assertIsInstance(nodes, dict)
 
 
     def test_nodes(self):
         client = SidecarSyncClient(TEST_SERVER)
         client.connect()
         nodes = client.nodes_status()
-        start = nodes[1]['available']
+        start = nodes.get(1, {}).get(TEST_FLAG, 'ok')
         not_start = not_status(start)
         # invert
-        client.set_node_attribute(1, 'available', not_start)
+        client.set_node_attribute(1, TEST_FLAG, not_start)
         nodes1 = client.nodes_status()
-        self.assertEqual(nodes1[1]['available'], not_start)
+        self.assertEqual(nodes1[1][TEST_FLAG], not_start)
         # put back
-        client.set_node_attribute(1, 'available', not_start)
+        client.set_node_attribute(1, TEST_FLAG, not_start)
         client.close()
 
 
@@ -159,6 +166,6 @@ class Tests(TestCase):
     async def co_prod_status(self):
         async with SidecarAsyncClient(PROD_SERVER) as sidecar:
             nodes = sidecar.nodes_status()
-        self.assertEqual(nodes[1]['available'], 'ok')
+        self.assertIn(1, nodes)
     def prod_status(self):
         co_run(self.co_prod_status())

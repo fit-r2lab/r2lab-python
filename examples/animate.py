@@ -29,22 +29,154 @@ def drange(start, stop, step):
         r += step
     return result
 
-######## valid values for initializing
-nodes_field_possible_values = {
-    'available' : [ None, 'ko'] + 3*['ok'],
-    'cmc_on_off' : [ 'fail' ] + 3 * [ 'on', 'off' ],
-    'control_ping' : [ 'on', 'off' ],
-    'control_ssh' : ['on', 'off'],
-    'os_release' : [ 'fedora-21', 'ubuntu-15.04', 'other', ],
-    'gnuradio_release' : ['3.7.10', '', None],
-    'uname' : [ 'foo', '4.2.300-generic' ],
-    'image_radical' : [ 'ubuntu-15.04', 'oai-scrambler', '', None ],
-    'usrp_type' : 12 * [ None ] + [ 'b210', 'n210', 'usrp1', 'usrp2'],
-    'usrp_on_off' : 3 * ['on'] + ['off'],
-    'usrp_duplexer' : ['none', 'for eNB', 'for UE'],
-    'images_usrp' : [ [], ['usrp1.png'], ['usrp1.png', 'usrp2.jpg']],
-    'images_wifi' : [ [], ['wifi1.png'], ['wifi1.png', 'wifi2.jpg']],
-}
+######## the nodes records follow the data model of monitornodes:
+# live flags: cmc_on_off, usrp_on_off, control_ping, control_ssh
+# 'metal': the bare machine - ssh_port, os_release, pretty_name,
+#          image_radical, uname, gnuradio_release, docker_version, seen
+# 'container': None, or image, running, started, os_release, pretty_name, seen
+# 'static': free-form, comes from the inventory, never changes here
+# 'availability': status ok|ko, reason, since - comes from the r2lab-api
+
+# (os_release, pretty_name, uname)
+distros = [
+    ('fedora-41', 'Fedora Linux 41 (Server Edition)', '6.17.9-100.fc41.x86_64'),
+    ('ubuntu-24.04', 'Ubuntu 24.04.3 LTS', '6.8.0-60-generic'),
+    ('ubuntu-26.04', 'Ubuntu 26.04 LTS', '7.0.0-12-generic'),
+    ('debian-12', 'Debian GNU/Linux 12 (bookworm)', '6.1.0-37-amd64'),
+    ('rocky-9', 'Rocky Linux 9.5 (Blue Onyx)', '5.14.0-503.el9.x86_64'),
+    ('alma-9', 'AlmaLinux 9.5 (Teal Serval)', '5.14.0-503.el9.x86_64'),
+    ('alpine-3.24.4', 'Alpine Linux v3.24', '6.12.1-0-lts'),
+    ('mint-22', 'Linux Mint 22', '6.8.0-60-generic'),
+    ('opensuse-15.6', 'openSUSE Leap 15.6', '6.4.0-150600-default'),
+    ('arch-rolling', 'Arch Linux', '6.12.1-arch1-1'),
+    ('other', 'Some Other Linux', '5.15.0-foo'),
+]
+
+usrp_types = [None, None, 'b205', 'b210', 'n210', 'usrp1', 'usrp2',
+              'limesdr', 'e3372', 'Quectel 4G/5G']
+duplexers = ['', '2-5G', 'Dup-UE', 'Dup-eNB', 'Dup-UE/2-5G']
+
+unavailable_reasons = ['ssh unreachable after reset', 'broken CMC',
+                       'frisbee failed', 'USRP not detected']
+
+def iso_now():
+    return datetime.datetime.now(datetime.timezone.utc)\
+        .strftime("%Y-%m-%dT%H:%M:%SZ")
+
+def static_record(id):
+    "what positions.yaml says about a slot; stable for a given id"
+    rnd = random.Random(id)
+    record = {'data_interface': rnd.random() > 0.2,
+              'images': [f"2026-07/fit{id:02d}.jpg"],
+              'images_wifi': [f"{id:02d}-1.JPG", f"{id:02d}-2.JPG"],
+              'images_usrp': []}
+    usrp_type = rnd.choice(usrp_types)
+    if usrp_type:
+        record['usrp_type'] = usrp_type
+        record['usrp_duplexer'] = rnd.choice(duplexers)
+        record['images'].append(f"2026-07/fit{id:02d}-{usrp_type.split()[0].lower()}.jpg")
+        if usrp_type.startswith('Quectel'):
+            record['usrp_logo'] = 'antenna'
+    else:
+        record['usrp_type'] = 'none'
+    return record
+
+def distro_record(os_release):
+    for distro in distros:
+        if distro[0] == os_release:
+            return distro
+    raise ValueError(os_release)
+
+class SimNode:
+    """
+    the state of one simulated node, that persists across cycles, the way
+    monitornodes keeps the last known metal and container of a node that is off
+    one node out of 3 is a docker node
+    """
+
+    def __init__(self, id):
+        self.id = id
+        self.docker = id % 3 == 0
+        self.static = static_record(id)
+        self.flags = {'cmc_on_off': 'off', 'usrp_on_off': 'off',
+                      'control_ping': 'off', 'control_ssh': 'off'}
+        # until a node has been up, we know nothing about what runs there
+        self.metal = None
+        self.container = None
+        self.availability = {'status': 'ok'}
+
+    def make_metal(self):
+        os_release, pretty_name, uname = random.choice(distros)
+        if self.docker:
+            return {'ssh_port': 2222, 'os_release': os_release,
+                    'pretty_name': pretty_name,
+                    'image_radical': f"{os_release}+docker-ssh2222",
+                    'uname': uname, 'gnuradio_release': 'none',
+                    'docker_version': random.choice(['27.3.1', '28.0.4', '29.1.2']),
+                    'seen': int(time.time())}
+        return {'ssh_port': 22, 'os_release': os_release,
+                'pretty_name': pretty_name,
+                'image_radical': f"{os_release}-2026-07",
+                'uname': uname,
+                'gnuradio_release': random.choice(['none', '3.10.9']),
+                'docker_version': '',
+                'seen': int(time.time())}
+
+    def make_container(self):
+        os_release, pretty_name, _ = random.choice(distros)
+        return {'image': f"r2lab/{os_release.split('-')[0]}:latest",
+                'running': random.random() > 0.2,
+                'started': iso_now(),
+                'os_release': os_release, 'pretty_name': pretty_name,
+                'seen': int(time.time())}
+
+    def evolve(self):
+        "one random transition, like monitornodes would observe"
+        r = random.random()
+        up = self.flags['cmc_on_off'] == 'on'
+        if not up or r < 0.15:
+            # (re)boot: the node goes up, with a new metal, maybe a container
+            self.flags = {'cmc_on_off': 'on',
+                          'usrp_on_off': random.choice(['on', 'on', 'off']),
+                          'control_ping': 'on', 'control_ssh': 'on'}
+            self.metal = self.make_metal()
+            self.container = self.make_container() if self.docker else None
+        elif r < 0.30:
+            # off: the flags go off, the last metal and container stay
+            self.flags = {'cmc_on_off': 'off', 'usrp_on_off': 'off',
+                          'control_ping': 'off', 'control_ssh': 'off'}
+        elif r < 0.40 and self.container:
+            # the container stops or restarts, the metal stays
+            self.container = dict(
+                self.container, running=not self.container['running'],
+                started=iso_now(), seen=int(time.time()))
+        elif r < 0.45:
+            self.flags['cmc_on_off'] = 'fail'
+        elif r < 0.50:
+            self.flags['usrp_on_off'] = random.choice(['on', 'off'])
+        # availability, as set by the nightly script
+        if self.availability['status'] == 'ok' and random.random() < 0.03:
+            self.availability = {'status': 'ko', 'since': iso_now(),
+                                 'reason': random.choice(unavailable_reasons)}
+        elif self.availability['status'] == 'ko' and random.random() < 0.2:
+            self.availability = {'status': 'ok'}
+
+    def info(self, index=0):
+        """
+        what monitornodes would report; for index > 0 we only
+        send some of it, to test incomplete news on the livemap side
+        """
+        info = {'id': self.id, 'static': self.static,
+                'availability': self.availability, **self.flags}
+        if self.metal:
+            info['metal'] = self.metal
+            info['container'] = self.container
+        keys = [k for k in info if k != 'id']
+        for key in random.sample(keys, min(index, len(keys) - 1)):
+            del info[key]
+        return info
+
+sim_nodes = {id: SimNode(id) for id in node_ids}
 
 phones_field_possible_values = {
     'wifi_on_off' : [ 'on', 'off' ],
@@ -56,37 +188,12 @@ def random_ids(max_nodes_impacted):
     how_many = random.randint(1, max_nodes_impacted)
     return [ random.choice(node_ids) for i in range(how_many)]
 
-# heuristics to avoid too inconsistent data
-def normalize_status(node_info):
-    # None means do not mention this key at all
-    none_keys = { k for k in node_info if node_info[k] is None }
-    for k in none_keys:
-        del node_info[k]
-    # avoid producing too inconsistent data
-    if 'control_ssh' in node_info and node_info['control_ssh'] != 'off':
-        node_info.update({'cmc_on_off' : 'on',
-                          'control_ping' : 'on',
-                      })
-    return node_info
-
 def random_node_status(id, index=0):
-    # for testing incomplete news on the livemap side
-    # we expose one or the other or both
-    # however the default always expose the full monty
-    node_info = { 'id' : id }
-    # fill node_info with all known keys
-    node_info.update( { field : random.choice(values)
-                       for field, values in nodes_field_possible_values.items() })
-    # make sure this is mostly consistent
-    normalize_status(node_info)
     # index == 0 means we need a complete record
-    # otherwise let's remove some
-    items_to_remove = index % len(nodes_field_possible_values)
-    keys_to_remove = random.sample(nodes_field_possible_values.keys(), items_to_remove)
-    for field in keys_to_remove:
-        if field in node_info:
-            del node_info[field]
-    return node_info
+    # otherwise some keys are left out
+    node = sim_nodes[id]
+    node.evolve()
+    return node.info(index)
 
 def random_phone_status(id):
     phone_info = { 'id' : id }
@@ -160,16 +267,51 @@ def main():
     # because by default openssl has no CA installed
     # - contrary to the browser model -
     # we turn off server authentication
-    import websockets
-    secure, *_ = websockets.uri.parse_uri(url)
+    secure = url.startswith('wss:')
     kwds = {}
     if secure:
         import ssl
         # kwds.update(dict(ssl=ssl.create_default_context()))
         kwds.update(dict(ssl=ssl.SSLContext()))
 
-    with SidecarSyncClient(url, **kwds) as sidecar:
+    # the sync client only runs its event loop during calls, so keepalive
+    # pings can't be answered while we sleep: disable them on our side,
+    # and reconnect transparently whenever the connection is dropped
+    kwds.setdefault('ping_interval', None)
 
+    class Session:
+        def __init__(self):
+            self.client = None
+
+        def connect(self):
+            self.close()
+            self.client = SidecarSyncClient(url, **kwds)
+            self.client.connect()
+
+        def close(self):
+            if self.client is not None:
+                try:
+                    self.client.close()
+                except Exception as exc:
+                    print(f"ignoring error while closing: {exc!r}")
+                self.client = None
+
+        def send(self, payload, retries=3):
+            for attempt in range(1, retries + 1):
+                try:
+                    if self.client is None:
+                        self.connect()
+                    self.client.send_payload(payload)
+                    return True
+                except Exception as exc:
+                    print(f"send failed (attempt {attempt}/{retries}): {exc!r}")
+                    self.close()
+                    time.sleep(min(2 ** attempt, 10))
+            print("giving up on this payload, will retry next cycle")
+            return False
+
+    session = Session()
+    try:
         counter = 0
         payload = SidecarPayload()
         while True:
@@ -181,7 +323,7 @@ def main():
                               [ (info['id'], len(info)-1) for info in news_infos]))
                 print(news_infos[0])
             payload.fill_from_infos(news_infos, category='nodes')
-            sidecar.send_payload(payload)
+            session.send(payload)
 
             # only one phone
             if counter % args.phone_cycle == 0:
@@ -189,17 +331,26 @@ def main():
                 if args.verbose:
                     print("phone: emitting {}".format(phone_infos[0]))
                 payload.fill_from_infos(phone_infos, 'phones')
-                sidecar.send_payload(payload)
+                session.send(payload)
 
-            leases = get_leases()
-            print(f"leases {leases}")
+            try:
+                leases = get_leases()
+            except Exception as exc:
+                print(f"get_leases failed: {exc!r}")
+                leases = None
             if leases:
+                if args.verbose:
+                    print(f"leases {leases}")
                 payload.fill_from_infos(leases, 'leases')
-                sidecar.send_payload(payload)
+                session.send(payload)
             counter += 1
             if args.runs and counter >= args.runs:
                 break
             time.sleep(cycle)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        session.close()
 
 
 if __name__ == '__main__':

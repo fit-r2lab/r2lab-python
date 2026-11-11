@@ -117,7 +117,7 @@ class SidecarConnection(websockets.legacy.client.WebSocketClientProtocol):
 
                 async with SidecarAsyncClient() as sidecar:
                     nodes_status = await sidecar.nodes_status()
-                print(nodes_status[1]['usrp_type'])
+                print(nodes_status[1]['static']['usrp_type'])
 
         """
         return await self._probe_category('nodes')

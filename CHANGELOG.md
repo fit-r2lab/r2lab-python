@@ -1,5 +1,16 @@
 # ChangeLog
 
+## unreleased
+
+- examples: `available.py` and `unavailable.py` are gone; the availability of
+  nodes is now kept in r2labapi, and changed with `rhubarbe available` and
+  `rhubarbe unavailable`; the sidecar only holds live data
+- `SidecarPayload.SUPPORTED` describes the data model of monitornodes: `metal`,
+  `container`, `static` and `availability` records, instead of flat keys
+- examples/animate.py emits data in that same data model
+- tests/test_sidecar.py: use a local sidecar by default, and a dedicated
+  attribute instead of `available`
+
 ## 0.12.0 - 2026 Feb 26
 
 - new timeout parameter for the SidecarSyncClient, to avoid hanging indefinitely

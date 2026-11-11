@@ -10,14 +10,31 @@ import json
 
 # the attributes of interest, and their possible values
 # this for now is for information only
+#
+# the sidecar only keeps live data about the nodes
+# what is static (SDR, photos, ...) comes from the inventory, and
+# the availability from r2labapi (see rhubarbe available);
+# both are reported by monitornodes, and are not meant to be set from here
 SUPPORTED = {
     'nodes': {
         '__range__': range(1, 38),
-        'available': ("on", "off"),
-        'usrp_type': ("none", "b205", "b210", "n210", "usrp1", "usrp2",
-                      "limesdr", "LEAT LoRa", "e3372"),
-        # this is meaningful for b210 nodes only
-        'usrp_duplexer': ("for UE", "for eNB", "none"),
+        # live status
+        'cmc_on_off': ("on", "off", "fail"),
+        'usrp_on_off': ("on", "off"),
+        'control_ping': ("on", "off"),
+        'control_ssh': ("on", "off"),
+        # records, i.e. dicts, as sent by monitornodes
+        # what runs on the bare machine: ssh_port, os_release, pretty_name,
+        # image_radical, uname, gnuradio_release, docker_version, seen
+        'metal': "dict",
+        # None for a regular node; for a docker node: image, running,
+        # started, os_release, pretty_name, seen
+        'container': "dict or None",
+        # free-form, from the inventory: usrp_type, usrp_duplexer,
+        # usrp_logo, data_interface, images, images_wifi, images_usrp, ...
+        'static': "dict",
+        # status ('ok' or 'ko') and, if ko, reason and since
+        'availability': "dict",
     },
     'phones': {
         '__range__': range(1, 2),
