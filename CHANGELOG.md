@@ -1,15 +1,17 @@
 # ChangeLog
 
-## unreleased
+## 0.13.0 - 2026 Nov 11
 
-- examples: `available.py` and `unavailable.py` are gone; the availability of
-  nodes is now kept in r2labapi, and changed with `rhubarbe available` and
-  `rhubarbe unavailable`; the sidecar only holds live data
-- `SidecarPayload.SUPPORTED` describes the data model of monitornodes: `metal`,
-  `container`, `static` and `availability` records, instead of flat keys
-- examples/animate.py emits data in that same data model
+- as of this date, the availability of nodes is now kept in r2labapi,
+  and changed with `rhubarbe available`, and the sidecar only holds live data
+- hence this library no longer supports changing the node's availability:
+  `available.py` and `unavailable.py` are gone;
+- `SidecarPayload.SUPPORTED` describes the data model of exposed by monitornodes:
+  `metal`, `container`, `static` and `availability` records, instead of flat keys
+- `examples/animate.py` undusted, and now emits data in that same data model
 - tests/test_sidecar.py: use a local sidecar by default, and a dedicated
   attribute instead of `available`
+- create uv.lock
 
 ## 0.12.0 - 2026 Feb 26
 
@@ -25,7 +27,7 @@
 
 * after an intense one-week bug chasing that eventually pointed to
   websockets new asyncio implementation
-  so basically this reverts to using the legacy websockets client 
+  so basically this reverts to using the legacy websockets client
   implementation
   see https://github.com/python-websockets/websockets/issues/1563
   for a follow-up
