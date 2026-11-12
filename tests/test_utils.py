@@ -40,12 +40,12 @@ class Tests(unittest.TestCase):
 
 
     def test_parse_slice(self):
-        self.assertEqual(r2lab_parse_slice('inria_foo'),
-                         ('inria_foo', 'faraday.inria.fr'))
-        self.assertEqual(r2lab_parse_slice('inria_foo@faraday.inria.fr'),
-                         ('inria_foo', 'faraday.inria.fr'))
-        self.assertEqual(r2lab_parse_slice('inria_foo@etourdi.pl.sophia.inria.fr'),
-                         ('inria_foo', 'etourdi.pl.sophia.inria.fr'))
+        self.assertEqual(r2lab_parse_slice('inria-foo'),
+                         ('inria-foo', 'faraday.inria.fr'))
+        self.assertEqual(r2lab_parse_slice('inria-foo@faraday.inria.fr'),
+                         ('inria-foo', 'faraday.inria.fr'))
+        self.assertEqual(r2lab_parse_slice('inria-foo@preplab.pl.sophia.inria.fr'),
+                         ('inria-foo', 'preplab.pl.sophia.inria.fr'))
 
     def test_find_local_embedded_script(self):
         # this is local to my setup unfortunately

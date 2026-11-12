@@ -22,7 +22,16 @@ SUPPORTED = {
         'cmc_on_off': ("on", "off", "fail"),
         'usrp_on_off': ("on", "off"),
         'control_ping': ("on", "off"),
+        # ssh answers, on any port (22, or 2222 on a docker host)
         'control_ssh': ("on", "off"),
+        # only if monitornodes looks for it: the node runs the image
+        # loader or saver
+        'control_telnet': ("on", "off"),
+        # where ssh answers, a list of ports: [22], [2222] or [22, 2222]
+        'ssh_ports': "list",
+        # one label computed from the above by monitornodes
+        'state': ("off", "bios", "booting", "telnet", "docker-only",
+                  "container", "regular", "zombie", "unknown"),
         # records, i.e. dicts, as sent by monitornodes
         # what runs on the bare machine: ssh_port, os_release, pretty_name,
         # image_radical, uname, gnuradio_release, docker_version, seen

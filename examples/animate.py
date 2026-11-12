@@ -30,7 +30,10 @@ def drange(start, stop, step):
     return result
 
 ######## the nodes records follow the data model of monitornodes:
-# live flags: cmc_on_off, usrp_on_off, control_ping, control_ssh
+# live flags: cmc_on_off, usrp_on_off, control_ping, control_ssh (ssh on any
+#          port), control_telnet, ssh_ports (where ssh answers: 22 and/or 2222)
+# 'state': one label computed from these, off | bios | booting | telnet |
+#          docker-only | container | regular | zombie | unknown
 # 'metal': the bare machine - ssh_port, os_release, pretty_name,
 #          image_radical, uname, gnuradio_release, docker_version, seen
 # 'container': None, or image, running, started, os_release, pretty_name, seen
@@ -98,12 +101,39 @@ class SimNode:
         self.id = id
         self.docker = id % 3 == 0
         self.static = static_record(id)
-        self.flags = {'cmc_on_off': 'off', 'usrp_on_off': 'off',
-                      'control_ping': 'off', 'control_ssh': 'off'}
+        self.state = 'off'
+        self.usrp = 'off'
+        self.flags = {}
+        self.apply_state()
         # until a node has been up, we know nothing about what runs there
         self.metal = None
         self.container = None
         self.availability = {'status': 'ok'}
+
+    # what each state looks like from the outside:
+    # cmc, ping, ssh ports (None: no telnet to speak of either)
+    SHAPES = {
+        'off': ('off', 'off', []),
+        'bios': ('on', 'off', []),
+        'booting': ('on', 'on', []),
+        'zombie': ('on', 'on', []),
+        'telnet': ('on', 'on', []),
+        'regular': ('on', 'on', [22]),
+        'docker-only': ('on', 'on', [2222]),
+        'container': ('on', 'on', [22, 2222]),
+        'unknown': ('fail', 'off', []),
+    }
+
+    def apply_state(self):
+        cmc, ping, ports = self.SHAPES[self.state]
+        self.flags = {
+            'state': self.state,
+            'cmc_on_off': cmc, 'usrp_on_off': self.usrp,
+            'control_ping': ping,
+            'control_ssh': 'on' if ports else 'off',
+            'control_telnet': 'on' if self.state == 'telnet' else 'off',
+            'ssh_ports': ports,
+        }
 
     def make_metal(self):
         os_release, pretty_name, uname = random.choice(distros)
@@ -130,30 +160,81 @@ class SimNode:
                 'os_release': os_release, 'pretty_name': pretty_name,
                 'seen': int(time.time())}
 
+    def up_state(self):
+        "where a node that has finished booting ends up"
+        if not self.docker:
+            return 'regular'
+        # the container may not be started yet
+        return 'container' if random.random() < 0.7 else 'docker-only'
+
     def evolve(self):
-        "one random transition, like monitornodes would observe"
+        """
+        one random transition, like monitornodes would observe, along
+        off -> bios -> booting -> (telnet -> booting ->) up -> off ...
+        """
         r = random.random()
-        up = self.flags['cmc_on_off'] == 'on'
-        if not up or r < 0.15:
-            # (re)boot: the node goes up, with a new metal, maybe a container
-            self.flags = {'cmc_on_off': 'on',
-                          'usrp_on_off': random.choice(['on', 'on', 'off']),
-                          'control_ping': 'on', 'control_ssh': 'on'}
-            self.metal = self.make_metal()
-            self.container = self.make_container() if self.docker else None
-        elif r < 0.30:
-            # off: the flags go off, the last metal and container stay
-            self.flags = {'cmc_on_off': 'off', 'usrp_on_off': 'off',
-                          'control_ping': 'off', 'control_ssh': 'off'}
-        elif r < 0.40 and self.container:
-            # the container stops or restarts, the metal stays
-            self.container = dict(
-                self.container, running=not self.container['running'],
-                started=iso_now(), seen=int(time.time()))
-        elif r < 0.45:
-            self.flags['cmc_on_off'] = 'fail'
-        elif r < 0.50:
-            self.flags['usrp_on_off'] = random.choice(['on', 'off'])
+        state = self.state
+        if state == 'off':
+            if r < 0.4:
+                self.state = 'bios'
+        elif state == 'bios':
+            self.state = 'booting'
+        elif state == 'booting':
+            if r < 0.25:
+                self.state = 'telnet'
+            elif r < 0.30:
+                self.state = 'zombie'
+            elif r < 0.70:
+                self.state = self.up_state()
+                self.usrp = random.choice(['on', 'on', 'off'])
+        elif state == 'telnet':
+            # the image is loaded, the node reboots
+            if r < 0.4:
+                self.state = 'bios'
+        elif state in ('zombie', 'unknown'):
+            if r < 0.3:
+                self.state = 'off'
+        else:
+            if r < 0.08:
+                # off: the flags go off, the last metal and container stay
+                self.state = 'off'
+                self.usrp = 'off'
+            elif r < 0.12:
+                # an rload or rsave
+                self.state = 'telnet'
+            elif r < 0.14:
+                self.state = 'unknown'
+            elif r < 0.30 and self.docker:
+                # the container stops or restarts, the metal stays
+                self.state = ('docker-only' if state == 'container'
+                              else 'container')
+            elif r < 0.34:
+                self.usrp = random.choice(['on', 'off'])
+        if self.state == 'off':
+            self.usrp = 'off'
+        if self.state in ('regular', 'container', 'docker-only'):
+            if state not in ('regular', 'container', 'docker-only'):
+                # we have just got in: a new metal
+                self.metal = self.make_metal()
+                self.container = None
+            if self.state == 'container':
+                # the user logs into a running container
+                if not self.container or not self.container['running']:
+                    self.container = self.make_container()
+                    self.container['running'] = True
+            elif self.state == 'docker-only':
+                # a docker host whose container is stopped, or that has none
+                if state == 'container' or (
+                        state not in ('docker-only', 'container')
+                        and self.docker and random.random() < 0.5):
+                    self.container = dict(
+                        self.container or self.make_container(),
+                        running=False, started=iso_now(),
+                        seen=int(time.time()))
+            else:
+                # a regular node has no container
+                self.container = None
+        self.apply_state()
         # availability, as set by the nightly script
         if self.availability['status'] == 'ok' and random.random() < 0.03:
             self.availability = {'status': 'ko', 'since': iso_now(),
@@ -163,16 +244,21 @@ class SimNode:
 
     def info(self, index=0):
         """
-        what monitornodes would report; for index > 0 we only
-        send some of it, to test incomplete news on the livemap side
+        what monitornodes would report; for index > 0 we leave out some of
+        the optional keys, to test incomplete news on the livemap side
+
+        monitornodes always sends together what goes together: the state and
+        the flags it derives from (cmc_on_off, control_ping, control_ssh,
+        control_telnet, ssh_ports), and metal with container; some of these
+        make no sense without the others, so we never drop them
         """
         info = {'id': self.id, 'static': self.static,
                 'availability': self.availability, **self.flags}
         if self.metal:
             info['metal'] = self.metal
             info['container'] = self.container
-        keys = [k for k in info if k != 'id']
-        for key in random.sample(keys, min(index, len(keys) - 1)):
+        optional = ['static', 'availability', 'usrp_on_off']
+        for key in random.sample(optional, min(index, len(optional))):
             del info[key]
         return info
 
@@ -203,8 +289,8 @@ def random_phone_status(id):
     return phone_info
 
 # too lazy to get this properly (need to turn off server auth)
-nightly = 'inria_r2lab.nightly'
-other_slice = 'inria_r2lab.tutorial'
+nightly = 'inria-nightly'
+other_slice = 'inria-tutorial'
 
 def get_leases():
     print("WARNING: get_leases returns a hard-wired set of leases today")

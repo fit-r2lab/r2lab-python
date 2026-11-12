@@ -69,9 +69,9 @@ def r2lab_parse_slice(slice):
     Example:
         Typical usage is::
 
-            slice, hostname = r2lab_parse_slice("inria_r2lab.tutorial")
+            slice, hostname = r2lab_parse_slice("inria-tutorial")
 
-            slice, hostname = r2lab_parse_slice("inria_r2lab.tutorial@faraday.inria.fr")
+            slice, hostname = r2lab_parse_slice("inria-tutorial@faraday.inria.fr")
 
     """
     if slice.find('@') > 0:
