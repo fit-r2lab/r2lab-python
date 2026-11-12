@@ -1,5 +1,13 @@
 # ChangeLog
 
+## 0.13.1 - 2026 Nov 12
+
+- `SidecarPayload.SUPPORTED` knows the new keys of the nodes: `state`,
+  `ssh_ports` and `control_telnet`
+- `examples/animate.py` simulates the new states
+- local dev environment now runs on python 3.15 (`.python-version`); uv.lock
+  refreshed accordingly (pandas 3.x)
+
 ## 0.13.0 - 2026 Nov 11
 
 - as of this date, the availability of nodes is now kept in r2labapi,
